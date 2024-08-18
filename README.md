@@ -13,7 +13,7 @@ Then, initialize a virtual environment:
 Then, source the virtual environment for your shell:
 
 **macOS & Linux:**
-`source bin/acivate`
+`source bin/activate`
 
 **Windows:**
 `.\Scripts\activate.bat`
