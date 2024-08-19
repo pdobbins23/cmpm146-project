@@ -27,11 +27,6 @@ if __name__ == "__main__":
     # game data
     player = Player()
     principle = Principle()
-
-    up = False
-    down = False
-    left = False
-    right = False
     
     running = True
 
@@ -46,19 +41,14 @@ if __name__ == "__main__":
         # process input
         keys = pygame.key.get_pressed()
 
-        up = keys[pygame.K_UP]
-        down = keys[pygame.K_DOWN]
-        left = keys[pygame.K_LEFT]
-        right = keys[pygame.K_RIGHT]
-
         # process player movement
-        if up:
+        if keys[pygame.K_UP]:
             player.pos.y -= player.speed
-        if down:
+        if keys[pygame.K_DOWN]:
             player.pos.y += player.speed
-        if left:
+        if keys[pygame.K_LEFT]:
             player.pos.x -= player.speed
-        if right:
+        if keys[pygame.K_RIGHT]:
             player.pos.x += player.speed
 
         # clear the screen with a purple color
