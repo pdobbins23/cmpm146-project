@@ -1,4 +1,6 @@
 import pygame
+# our code files
+import behavior
 
 # Player state data
 class Player:
@@ -18,6 +20,11 @@ class Principle:
         self.speed = 4
 
 if __name__ == "__main__":
+    # print behavior tree for inspection
+    behavior_tree = behavior.create_behavior_tree()
+    print(behavior_tree.tree_to_string())
+
+    # start game
     pygame.init()
 
     # core setup
