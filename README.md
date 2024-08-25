@@ -28,15 +28,27 @@ Now, you should be able to run the game with:
 
 `python src/main.py` 
 
+## Level Editing
+
+Levels are made using [LDtk](https://ldtk.io/).
+
+To edit the main level, open LDtk and import the file `assets/level.json`.
+
+From there, you will be able to edit the level used by the game.
+
+To add new tile textures to be used in the game, you can edit `assets/tileset.png`.
+
 ## TODO
 
 Game Model (Peter & Amanda):
 
 - [x] Decide on tools to use
 - [ ] Player
-  - [ ] Movement
+  - [x] Movement
+  - [ ] Picking up items
 - [ ] Objects/items
 - [ ] Map
+  - [x] Tilemap
   - [ ] Interactables (doors, lockers)
   - [ ] Exit
   - [ ] Obstacles
@@ -45,6 +57,7 @@ Game Model (Peter & Amanda):
 - [ ] Principle
   - [ ] Health/Stun Bar
 - [ ] Line of Sight Visualization
+- [ ] Level design
 - [ ] Art (TBD)
 - [ ] Sounds (TBD)
 

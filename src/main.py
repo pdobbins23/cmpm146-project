@@ -145,6 +145,7 @@ if __name__ == "__main__":
 
             r = pygame.Rect(x * 32 - camera.x, y * 32 - camera.y, 32, 32)
 
+            # TODO: Switch to using the information from LDtk to render proper tile texture
             if tile.t == 0:
                 pygame.draw.rect(screen, "purple", r)
             elif tile.t == 1:
