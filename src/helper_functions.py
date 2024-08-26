@@ -67,4 +67,4 @@ def chase_player(state):
     # Set player's position as the Principal's target
     state.principle.target = player_pos
     
-    return True
+    pass
