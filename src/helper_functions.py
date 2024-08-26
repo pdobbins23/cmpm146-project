@@ -1,5 +1,6 @@
 import behavior
 from math import sqrt
+from random import randint
 
 def investigate_sounds(state) -> bool:
     if detect_sound(state):
