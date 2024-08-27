@@ -1,4 +1,3 @@
-import behavior
 from math import sqrt
 from random import randint
 
@@ -12,36 +11,42 @@ def investigate_sounds(state) -> bool:
 def detect_sound(state) -> bool:
     return state.sound_detected
 
-def move_towards_sound_source(state, sound_source):
-    # Calculate direction vector to the sound source
-    direction_x = sound_source.x - state.principal.rect.centerx
-    direction_y = sound_source.y - state.principal.rect.centery
-    
-    # Normalize the direction
-    length = sqrt(direction_x**2 + direction_y**2)
-    direction_x /= length
-    direction_y /= length
-    
-    # Move Principal
-    state.principal.rect.x += direction_x * state.principal.speed
-    state.principal.rect.y += direction_y * state.principal.speed
+def move_towards_sound_source(state, sound_source) -> bool:
+    # Set sound src cordinates as prinicpal's target
+    state.principal.target.x = sound_source.x
+    state.principal.target.y = sound_source.y
+    return True
 
-def check_is_player_in_front(state):
-    """
-    Explanation:
-    1. Obtain Rects: Retrieve the rectangles for the player and the Principal from the game state.
-    2. Determine Facing Direction: Get the direction the Principal is facing.
-    3. Check Player Position:
-    - Facing Right: Player must be to the right of the Principal and within a vertical range of 32 pixels.
-    - Facing Left: Player must be to the left of the Principal and within a vertical range of 32 pixels.
-    - Facing Up: Player must be above the Principal and within a horizontal range of 32 pixels.
-    - Facing Down: Player must be below the Principal and within a horizontal range of 32 pixels.
-    4. Default Case: If the facing direction is unknown or not set, return False.
-    5. Return Result: Return whether the player is in front of the Principal based on the checks.
-    """
-    pass
+def check_is_player_in_front(state) -> bool:
+    
+    # 1. Obtain Rects
+    player_rect = state.player.rect
+    principal_rect = state.principal.rect
+    
+    # 2. Determine Facing Direction
+    facing_direction = state.principal.facing_direction
+    
+    # 3. Check Player Position
+    if facing_direction == "right":
+        return (player_rect.left > principal_rect.right and
+                abs(player_rect.centery - principal_rect.centery) <= 32)
+    
+    elif facing_direction == "left":
+        return (player_rect.right < principal_rect.left and
+                abs(player_rect.centery - principal_rect.centery) <= 32)
+    
+    elif facing_direction == "up":
+        return (player_rect.bottom < principal_rect.top and
+                abs(player_rect.centerx - principal_rect.centerx) <= 32)
+    
+    elif facing_direction == "down":
+        return (player_rect.top > principal_rect.bottom and
+                abs(player_rect.centerx - principal_rect.centerx) <= 32)
+    
+    # 4. Default Case
+    return False
 
-def move_random_point(state): 
+def move_random_point(state) -> bool: 
     
     # Define window size
     window_width = 1280
@@ -59,7 +64,22 @@ def move_random_point(state):
     # Return success
     return True
 
-def chase_player(state):
+def move_points_of_interest(state, points_of_interest) -> bool:
+    if not points_of_interest:
+        return False  # No points of interest to move towards
+
+    # Find the closest point of interest
+    principal_pos = state.principal.pos
+    closest_point = min(points_of_interest, key=lambda p: sqrt((p[0] - principal_pos.x)**2 + (p[1] - principal_pos.y)**2))
+
+    # Set the closest point as the Principal's target
+    x, y = closest_point[0]
+    state.principal.target.x = x
+    state.principal.target.y = y
+
+    return True
+
+def chase_player(state) -> bool:
 
     # Get player's x, y coordinates
     player_pos = (state.player.pos.x, state.player.pos.y)
