@@ -1,23 +1,23 @@
 from math import sqrt
 from random import randint
 
-def investigate_sounds(state) -> bool:
+def investigate_sounds(state):
     if detect_sound(state):
         sound_source = state.sound_source 
         move_towards_sound_source(state, sound_source)
         return True
     return False
 
-def detect_sound(state) -> bool:
+def detect_sound(state):
     return state.sound_detected
 
-def move_towards_sound_source(state, sound_source) -> bool:
+def move_towards_sound_source(state, sound_source):
     # Set sound src cordinates as prinicpal's target
     state.principal.target.x = sound_source.x
     state.principal.target.y = sound_source.y
     return True
 
-def check_is_player_in_front(state) -> bool:
+def check_is_player_in_front(state):
     
     # 1. Obtain Rects
     player_rect = state.player.rect
@@ -46,7 +46,7 @@ def check_is_player_in_front(state) -> bool:
     # 4. Default Case
     return False
 
-def move_random_point(state) -> bool: 
+def move_random_point(state): 
     
     # Define window size
     window_width = 1280
@@ -64,7 +64,7 @@ def move_random_point(state) -> bool:
     # Return success
     return True
 
-def move_points_of_interest(state, points_of_interest) -> bool:
+def move_points_of_interest(state, points_of_interest):
     if not points_of_interest:
         return False  # No points of interest to move towards
 
@@ -79,7 +79,7 @@ def move_points_of_interest(state, points_of_interest) -> bool:
 
     return True
 
-def chase_player(state) -> bool:
+def chase_player(state):
 
     # Get player's x, y coordinates
     player_pos = (state.player.pos.x, state.player.pos.y)
