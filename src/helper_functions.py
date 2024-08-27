@@ -12,10 +12,13 @@ def detect_sound(state):
     return state.sound_detected
 
 def move_towards_sound_source(state, sound_source):
-    # Set sound src cordinates as prinicpal's target
-    state.principal.target.x = sound_source.x
-    state.principal.target.y = sound_source.y
-    return True
+    if state and sound_source:
+        # Update Principal's current target to the sound source
+        state.principal.current_target = sound_source
+        state.principal.stage = 'chasing'
+        return True
+    return False
+
 
 def check_is_player_in_front(state):
     
