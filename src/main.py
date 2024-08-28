@@ -17,6 +17,9 @@ class Player:
         self.holding_item = None
         self.throw_speed = 10
 
+        # hiding in locker
+        self.locker = None
+
         # properties
         self.speed = 5
 
@@ -33,7 +36,7 @@ class Principle:
 
         # state (0 = roam, 1 = patrol, 2 = chase)
         self.stage = 0
-        self.stunned = False
+        self.health = 10
 
         # properties
         self.speed = 4
@@ -146,6 +149,15 @@ if __name__ == "__main__":
                 if abs(item.vel.x) < 0.1 and abs(item.vel.y) < 0.1:
                     item.vel.x = 0
                     item.vel.y = 0
+
+                # principle collision
+                principle_collision = rect_overlap(item.pos, principle.pos)
+
+                if principle_collision[0] > 0 and principle_collision[1] > 0:
+                    principle.health -= 1
+
+                    item.vel.x *= -0.35
+                    item.vel.y *= -0.35
 
             # item collision
             tl = lvl.coord_to_tile(item.pos.x, item.pos.y)
