@@ -96,4 +96,5 @@ def chase_player(state):
 # goal is a tuple (x, y)
 # world is a 2D array of Tile objects
 def a_star(start, goal, world):
-    pass
+    # TODO
+    return None

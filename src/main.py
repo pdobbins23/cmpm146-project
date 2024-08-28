@@ -19,7 +19,7 @@ class Principle:
         self.pos = pos
 
         # current target location for pathfinding
-        self.target = pygame.Vector2(0, 0)
+        self.target = None
 
         # state (0 = roam, 1 = patrol, 2 = chase)
         self.stage = 0
@@ -34,8 +34,8 @@ def rect_overlap(r1, r2):
 
 if __name__ == "__main__":
     # print behavior tree for inspection
-    behavior_tree = behavior.create_behavior_tree()
-    print(behavior_tree.tree_to_string())
+    # behavior_tree = behavior.create_behavior_tree()
+    # print(behavior_tree.tree_to_string())
 
     # start game
     pygame.init()
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     camera = pygame.Vector2(0, 0)
     
     player = Player(pygame.Rect(50, 50, 32, 32))
-    principle = Principle()
+    principle = Principle(pygame.Rect(100, 100, 32, 32))
 
     lvl = level.Level("assets/level.json", tile_size=32)
 
@@ -77,6 +77,15 @@ if __name__ == "__main__":
             player.pos.x -= player.speed
         if keys[pygame.K_RIGHT]:
             player.pos.x += player.speed
+
+        # process principle
+        # TODO: Invoke behavior tree with current state
+
+        # pathfind to current principle target
+        if principle.target != None:
+            path = helper_functions.a_star((principle.pos.x, principle.pos.y), (principle.target.x, principle.target.y), lvl.tiles)
+
+            # TODO: Follow path
 
         # check for player collision
         tl = lvl.coord_to_tile(player.pos.x, player.pos.y)
@@ -148,6 +157,9 @@ if __name__ == "__main__":
 
         # draw player
         pygame.draw.rect(screen, "green", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
+
+        # draw principle
+        pygame.draw.rect(screen, "red", pygame.Rect(principle.pos.x - camera.x, principle.pos.y - camera.y, principle.pos.width, principle.pos.height))
 
         # swap buffers
         pygame.display.flip()
