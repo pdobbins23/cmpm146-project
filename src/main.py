@@ -15,7 +15,7 @@ class Player:
 
         # item
         self.holding_item = None
-        self.throw_speed = 10
+        self.throw_speed = 20
 
         # hiding in locker
         self.locker = None
@@ -42,9 +42,17 @@ class Principle:
         self.speed = 4
 
 class Item:
-    def __init__(self, pos=pygame.Rect(0, 0, 16, 16)):
+    def __init__(self, texture, pos=pygame.Rect(0, 0, 16, 16)):
         self.pos = pos
         self.vel = pygame.Vector2(0, 0)
+        self.texture = texture
+
+    def render(self, screen):
+        screen.blit(self.texture, self.pos)
+
+class Locker:
+    def __init__(self, pos=pygame.Rect(0, 0, 32, 64)):
+        self.pos = pos
 
 def rect_overlap(r1, r2):
     return (min(r1.x + r1.width, r2.x + r2.width) - max(r1.x, r2.x), min(r1.y + r1.height, r2.y + r2.height) - max(r1.y, r2.y))
@@ -77,35 +85,59 @@ if __name__ == "__main__":
     # generate items
     for y in range(0, lvl.height):
         for x in range(0, lvl.width):
-            if lvl.tiles[y][x].t == 1 and random.random() < 0.01:
-                items.append(Item(pygame.Rect(x * lvl.tile_size, y * lvl.tile_size, 16, 16)))
+            if lvl.tiles[y][x].t == 1 and random.random() < 0.005:
+                random_x = random.random() * lvl.tile_size
+                random_y = random.random() * lvl.tile_size
+                items.append(Item(None, pygame.Rect(x * lvl.tile_size + random_x, y * lvl.tile_size + random_y, 16, 16)))
+
+    lockers = [Locker(pygame.Rect(200, 200, 32, 64))]
 
     running = True
 
     # game loop
     while running:
+        pressed_e = False
+        
         # process OS events
         for event in pygame.event.get():
             # window closed
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_e:
+                    pressed_e = True
 
         # process input
         keys = pygame.key.get_pressed()
 
         # process player movement
-        if keys[pygame.K_UP]:
-            player.dir = 0
-            player.pos.y -= player.speed
-        if keys[pygame.K_DOWN]:
-            player.dir = 1
-            player.pos.y += player.speed
-        if keys[pygame.K_LEFT]:
-            player.dir = 2
-            player.pos.x -= player.speed
-        if keys[pygame.K_RIGHT]:
-            player.dir = 3
-            player.pos.x += player.speed
+
+        # check for collision with locker
+        if player.locker == None:
+            if keys[pygame.K_UP]:
+                player.dir = 0
+                player.pos.y -= player.speed
+            if keys[pygame.K_DOWN]:
+                player.dir = 1
+                player.pos.y += player.speed
+            if keys[pygame.K_LEFT]:
+                player.dir = 2
+                player.pos.x -= player.speed
+            if keys[pygame.K_RIGHT]:
+                player.dir = 3
+                player.pos.x += player.speed
+
+            for i, locker in enumerate(lockers):
+                collision = rect_overlap(locker.pos, player.pos)
+
+                if collision[0] > 0 and collision[1] > 0:
+                    if pressed_e:
+                        player.locker = i
+
+                    break
+        else:
+            if pressed_e:
+                player.locker = None
 
         if keys[pygame.K_SPACE] and player.holding_item != None:
             if player.dir == 0:
@@ -143,8 +175,8 @@ if __name__ == "__main__":
                 # item moving
                 item.pos = pygame.Rect(item.pos.x + item.vel.x, item.pos.y + item.vel.y, item.pos.width, item.pos.height)
 
-                item.vel.x *= 0.95
-                item.vel.y *= 0.95
+                item.vel.x *= 0.9
+                item.vel.y *= 0.9
 
                 if abs(item.vel.x) < 0.1 and abs(item.vel.y) < 0.1:
                     item.vel.x = 0
@@ -302,8 +334,16 @@ if __name__ == "__main__":
                 else:
                     print("UNKNOWN TILE:", tile.t)
 
+        # draw lockers
+        for i, locker in enumerate(lockers):
+            if player.locker == i:
+                pygame.draw.rect(screen, "green", pygame.Rect(locker.pos.x - camera.x - 5, locker.pos.y - camera.y - 5, locker.pos.width + 10, locker.pos.height + 10))
+
+            pygame.draw.rect(screen, "gray", pygame.Rect(locker.pos.x - camera.x, locker.pos.y - camera.y, locker.pos.width, locker.pos.height))
+
         # draw player
-        pygame.draw.rect(screen, "green", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
+        if player.locker == None:
+            pygame.draw.rect(screen, "green", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
 
         # draw principle
         pygame.draw.rect(screen, "red", pygame.Rect(principle.pos.x - camera.x, principle.pos.y - camera.y, principle.pos.width, principle.pos.height))
