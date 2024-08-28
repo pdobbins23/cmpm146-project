@@ -94,15 +94,6 @@ def chase_player(state):
     
     pass
 
-# start is a tuple (x, y)
-# goal is a tuple (x, y)
-# world is a 2D array of Tile objects
-#def a_star(start, goal, world):
-    # TODO
-#    return None
-
-
-
 # code taken and revised from p1
 def heuristic(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
@@ -114,7 +105,7 @@ def get_neighbors(node, world):
 
     for dx, dy in directions:
         nx, ny = x + dx, y + dy
-        if 0 <= nx < len(world) and 0 <= ny < len(world[0]) and world[nx][ny].walkable:
+        if 0 <= nx < len(world) and 0 <= ny < len(world[0]) and world[nx][ny].t == 1:
             neighbors.append((nx, ny))
 
     return neighbors

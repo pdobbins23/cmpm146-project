@@ -22,6 +22,9 @@ class Principle:
         # current target location for pathfinding
         self.target = None
 
+        # current pathfinding path
+        self.path = None
+
         # state (0 = roam, 1 = patrol, 2 = chase)
         self.stage = 0
         self.stunned = False
@@ -83,31 +86,32 @@ if __name__ == "__main__":
         # TODO: Invoke behavior tree with current state
 
         # pathfind to current principle target
-        #if principle.target != None:
-        #    path = helper_functions.a_star((principle.pos.x, principle.pos.y), (principle.target.x, principle.target.y), lvl.tiles)
+        principle.target = player.pos
+        
         # Pathfinding logic
         if principle.target:
             # Convert principle's target to tuple for a_star
             target_pos = (principle.target.x, principle.target.y)
-            path = a_star((principle.pos.x, principle.pos.y), target_pos, lvl.tiles)
-           
-            if path:
-                # Move principle towards the next point in the path
-                next_point = path[0]
-                direction = pygame.Vector2(next_point[0] - principle.pos.x, next_point[1] - principle.pos.y).normalize()
-                principle.pos.x += direction.x * principle.speed
-                principle.pos.y += direction.y * principle.speed
+            principle.path = a_star((principle.pos.x, principle.pos.y), target_pos, lvl.tiles)
 
-                # Check if principle has reached the next point
-                if pygame.math.Vector2(principle.pos.x, principle.pos.y).distance_to(pygame.math.Vector2(next_point[0], next_point[1])) < principle.speed:
-                    # Remove the reached point from the path
-                    path.pop(0)
-                    if path:
-                        next_point = path[0]
-                    else:
-                        principle.target = None
+            print(principle.path)
 
-            # TODO: Follow path
+        # follow path logic
+        if principle.path:
+            # Move principle towards the next point in the path
+            next_point = principle.path[0]
+            direction = pygame.Vector2(next_point[0] - principle.pos.x, next_point[1] - principle.pos.y).normalize()
+            principle.pos.x += direction.x * principle.speed
+            principle.pos.y += direction.y * principle.speed
+
+            # Check if principle has reached the next point
+            if pygame.math.Vector2(principle.pos.x, principle.pos.y).distance_to(pygame.math.Vector2(next_point[0], next_point[1])) < principle.speed:
+                # Remove the reached point from the path
+                path.pop(0)
+                if path:
+                    next_point = path[0]
+                else:
+                    principle.target = None
 
         # check for player collision
         tl = lvl.coord_to_tile(player.pos.x, player.pos.y)
