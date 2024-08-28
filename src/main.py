@@ -30,10 +30,10 @@ class Principle:
         self.pos = pos
 
         # current target location for pathfinding
-        self.target = None
+        self.target = (player.pos.x, player.pos.y)
 
         # current pathfinding path
-        self.path = None
+        self.path = (player.pos.x, player.pos.y)
 
         # state (0 = roam, 1 = patrol, 2 = chase)
         self.stage = 0
@@ -239,7 +239,7 @@ if __name__ == "__main__":
         # process principle
         # TODO: Invoke behavior tree with current state
         # pathfind to current principle target
-        if principle.target is not None:
+        '''if principle.target is not None:
             print("Target is set.")
         else:
             print("Target is None.")
@@ -250,13 +250,13 @@ if __name__ == "__main__":
         if principle.path is not None:
             print("Principle has a path to follow.")
         else:
-            print("Principle does not have a path.")
+            print("Principle does not have a path.")'''
 
         if principle.target is not None:
             #path = helper_functions.a_star((principle.pos.x, principle.pos.y),(principle.target.x, principle.target.y),lvl.tiles)
             target_pos = principle.target
             principle.path = a_star((principle.pos.x, principle.pos.y), target_pos, lvl.tiles)
-            print(principle.path)
+            print(principle.path) # PRINT STATEMENT CHECK
 
             # Follow the first step of the path if it exists
             if principle.path:
@@ -264,7 +264,7 @@ if __name__ == "__main__":
                 dx = next_step[0] - principle.pos.x
                 dy = next_step[1] - principle.pos.y
 
-                distance = math.sqrt(dx2 + dy2)
+                distance = math.sqrt(dx**2 + dy**2)
                 if distance != 0:
                     dx, dy = dx / distance * principle.speed, dy / distance * principle.speed
 
