@@ -30,10 +30,10 @@ class Principal:
         self.pos = pos
 
         # current target location for pathfinding
-        self.target = (player.pos.x, player.pos.y)
+        self.target = None
 
         # current pathfinding path
-        self.path = (player.pos.x, player.pos.y)
+        self.path = None
 
         # state (0 = roam, 1 = patrol, 2 = chase)
         self.stage = 0
@@ -79,6 +79,8 @@ if __name__ == "__main__":
     
     player = Player(pygame.Rect(50, 50, 32, 32))
     principal = Principal(pygame.Rect(100, 100, 32, 32))
+
+    pathfind_ticks = 0
 
     lvl = level.Level("assets/demo_level.json.ldtk", tile_size=32)
 
@@ -153,6 +155,42 @@ if __name__ == "__main__":
 
             player.holding_item = None
 
+        # check for player collision
+        tl = lvl.coord_to_tile(player.pos.x, player.pos.y)
+        br = lvl.coord_to_tile(player.pos.x + player.pos.width, player.pos.y + player.pos.height)
+
+        # loop over all tiles the player is touching, checking collision with each
+        for y in range(tl[1], br[1] + 1):
+            for x in range(tl[0], br[0] + 1):
+                collision = False
+
+                # we are colliding with a solid wall tile
+                # TODO: Remove hard-coded tile type checks, use LDtk features instead
+                if lvl.tiles[y][x].t == 0:
+                    collision = True
+
+                # resolve collision
+                if collision:
+                    tile_rect = pygame.Rect(x * lvl.tile_size, y * lvl.tile_size, lvl.tile_size, lvl.tile_size)
+                    overlap = rect_overlap(player.pos, tile_rect)
+
+                    # vertical resolution
+                    if overlap[0] > overlap[1]:
+                        # if player vertical midpoint is at or above tile vertical midpoint, resolve up
+                        if player.pos.y + (player.pos.height / 2) <= tile_rect.y + (tile_rect.height / 2):
+                            player.pos.y = tile_rect.y - player.pos.height
+                        # resolve down
+                        else:
+                            player.pos.y = tile_rect.y + tile_rect.height
+                    # horizontal resolution
+                    else:
+                        # if player horizontal midpoint is at or left of tile horizontal midpoint, resolve left
+                        if player.pos.x + (player.pos.width / 2) <= tile_rect.x + (tile_rect.width / 2):
+                            player.pos.x = tile_rect.x - player.pos.width
+                        # resolve right
+                        else:
+                            player.pos.x = tile_rect.x + tile_rect.width
+
         # process items
         for i, item in enumerate(items):
             collision = rect_overlap(item.pos, player.pos)
@@ -184,6 +222,9 @@ if __name__ == "__main__":
                     item.vel.x = 0
                     item.vel.y = 0
 
+                    # sound
+                    principal.heard_sound = (item.pos.x, item.pos.y)
+
                 # principal collision
                 principal_collision = rect_overlap(item.pos, principal.pos)
 
@@ -197,7 +238,7 @@ if __name__ == "__main__":
             tl = lvl.coord_to_tile(item.pos.x, item.pos.y)
             br = lvl.coord_to_tile(item.pos.x + item.pos.width, item.pos.y + item.pos.height)
 
-            # loop over all tiles the player is touching, checking collision with each
+            # loop over all tiles the item is touching, checking collision with each
             for y in range(tl[1], br[1] + 1):
                 for x in range(tl[0], br[0] + 1):
                     collision = False
@@ -239,85 +280,44 @@ if __name__ == "__main__":
 
         # process principal
         # TODO: Invoke behavior tree with current state
-        # pathfind to current principal target
-        # if principal.target is not None:
-        # pathfind to current principle target
-        '''if principle.target is not None:
-            print("Target is set.")
-        else:
-            print("Target is None.")
 
-        principal.target = (100, 100)
-        principal.path = [(50, 50), (60, 60), (70, 70)]
+        pathfind_ticks += 1
 
-        if principal.path is not None:
-            print("Principal has a path to follow.")
-        else:
-            print("Principal does not have a path.")
+        if pathfind_ticks > 10:
+            pathfind_ticks = 0
+            principal.target = (player.pos.x, player.pos.y)
 
-        if principal.target is not None:
-            #path = helper_functions.a_star((principal.pos.x, principal.pos.y),(principal.target.x, principal.target.y),lvl.tiles)
-            target_pos = principal.target
-            principal.path = a_star((principal.pos.x, principal.pos.y), target_pos, lvl.tiles)
-            print(principal.path)
-            print("Principle does not have a path.")'''
+        # pathfinding
+        if principal.target != None:
+            principal.path = a_star(lvl, (principal.pos.x, principal.pos.y), principal.target)
+            # print(principal.target, principal.path) # PRINT STATEMENT CHECK
+            principal.target = None
 
-        if principal.target is not None:
-            #path = helper_functions.a_star((principal.pos.x, principal.pos.y),(principal.target.x, principal.target.y),lvl.tiles)
-            target_pos = principal.target
-            principal.path = a_star((principal.pos.x, principal.pos.y), target_pos, lvl.tiles)
-            print(principal.path) # PRINT STATEMENT CHECK
-
-            # Follow the first step of the path if it exists
-            if principal.path:
-                next_step = principal.path[0]
-                dx = next_step[0] - principal.pos.x
-                dy = next_step[1] - principal.pos.y
-
-                distance = math.sqrt(dx**2 + dy**2)
-                if distance != 0:
-                    dx, dy = dx / distance * principal.speed, dy / distance * principal.speed
-
-                principal.pos.x += dx
-                principal.pos.y += dy
-
-                # If reached the target step, remove it from the path
-                if math.hypot(principal.pos.x - next_step[0], principal.pos.y - next_step[1]) < principal.speed:
-                    principal.path.pop(0)
-
-        # pathfind to current principal target
-        '''principal.target = player.pos
-        
-        # Pathfinding logic
-        if principal.target:
-            # Convert principal's target to tuple for a_star
-            target_pos = (principal.target.x, principal.target.y)
-            principal.path = a_star((principal.pos.x, principal.pos.y), target_pos, lvl.tiles)
-
-            print(principal.path)
-
-        # follow path logic
+        # Follow the first step of the path if it exists
         if principal.path:
-            # Move principal towards the next point in the path
-            next_point = principal.path[0]
-            direction = pygame.Vector2(next_point[0] - principal.pos.x, next_point[1] - principal.pos.y).normalize()
-            principal.pos.x += direction.x * principal.speed
-            principal.pos.y += direction.y * principal.speed
+            next_step = principal.path[0]
 
-            # Check if principal has reached the next point
-            if pygame.math.Vector2(principal.pos.x, principal.pos.y).distance_to(pygame.math.Vector2(next_point[0], next_point[1])) < principal.speed:
-                # Remove the reached point from the path
-                path.pop(0)
-                if path:
-                    next_point = path[0]
-                else:
-                    principal.target = None'''
+            dx = next_step[0] - principal.pos.x
+            dy = next_step[1] - principal.pos.y
 
-        # check for player collision
-        tl = lvl.coord_to_tile(player.pos.x, player.pos.y)
-        br = lvl.coord_to_tile(player.pos.x + player.pos.width, player.pos.y + player.pos.height)
+            distance = math.sqrt(dx**2 + dy**2)
+            if distance != 0:
+                dx, dy = dx / distance * principal.speed, dy / distance * principal.speed
 
-        # loop over all tiles the player is touching, checking collision with each
+            print(dx, dy, distance, principal.path)
+
+            principal.pos.x += dx
+            principal.pos.y += dy
+
+            # If reached the target step, remove it from the path
+            if distance < principal.speed:
+                principal.path.pop(0)
+            
+        # principal collision
+        tl = lvl.coord_to_tile(principal.pos.x, principal.pos.y)
+        br = lvl.coord_to_tile(principal.pos.x + principal.pos.width, principal.pos.y + principal.pos.height)
+
+        # loop over all tiles the principal is touching, checking collision with each
         for y in range(tl[1], br[1] + 1):
             for x in range(tl[0], br[0] + 1):
                 collision = False
@@ -330,24 +330,24 @@ if __name__ == "__main__":
                 # resolve collision
                 if collision:
                     tile_rect = pygame.Rect(x * lvl.tile_size, y * lvl.tile_size, lvl.tile_size, lvl.tile_size)
-                    overlap = rect_overlap(player.pos, tile_rect)
+                    overlap = rect_overlap(principal.pos, tile_rect)
 
                     # vertical resolution
                     if overlap[0] > overlap[1]:
-                        # if player vertical midpoint is at or above tile vertical midpoint, resolve up
-                        if player.pos.y + (player.pos.height / 2) <= tile_rect.y + (tile_rect.height / 2):
-                            player.pos.y = tile_rect.y - player.pos.height
+                        # if principal vertical midpoint is at or above tile vertical midpoint, resolve up
+                        if principal.pos.y + (principal.pos.height / 2) <= tile_rect.y + (tile_rect.height / 2):
+                            principal.pos.y = tile_rect.y - principal.pos.height
                         # resolve down
                         else:
-                            player.pos.y = tile_rect.y + tile_rect.height
+                            principal.pos.y = tile_rect.y + tile_rect.height
                     # horizontal resolution
                     else:
-                        # if player horizontal midpoint is at or left of tile horizontal midpoint, resolve left
-                        if player.pos.x + (player.pos.width / 2) <= tile_rect.x + (tile_rect.width / 2):
-                            player.pos.x = tile_rect.x - player.pos.width
+                        # if principal horizontal midpoint is at or left of tile horizontal midpoint, resolve left
+                        if principal.pos.x + (principal.pos.width / 2) <= tile_rect.x + (tile_rect.width / 2):
+                            principal.pos.x = tile_rect.x - principal.pos.width
                         # resolve right
                         else:
-                            player.pos.x = tile_rect.x + tile_rect.width
+                            principal.pos.x = tile_rect.x + tile_rect.width
 
         # update camera pos
         camera = pygame.Vector2(player.pos.x, player.pos.y) - pygame.Vector2(window_width / 2, window_height / 2)
@@ -394,6 +394,10 @@ if __name__ == "__main__":
 
         # draw principal
         pygame.draw.rect(screen, "red", pygame.Rect(principal.pos.x - camera.x, principal.pos.y - camera.y, principal.pos.width, principal.pos.height))
+
+        # draw principal path
+        if principal.path and len(principal.path) >= 2:
+            pygame.draw.lines(screen, "orange", False, [(pos[0] - camera.x, pos[1] - camera.y) for pos in principal.path])
 
         # draw items
         for i, item in enumerate(items):
