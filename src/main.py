@@ -262,11 +262,11 @@ if __name__ == "__main__":
             print(principal.path)
             print("Principle does not have a path.")'''
 
-        if principle.target is not None:
-            #path = helper_functions.a_star((principle.pos.x, principle.pos.y),(principle.target.x, principle.target.y),lvl.tiles)
-            target_pos = principle.target
-            principle.path = a_star((principle.pos.x, principle.pos.y), target_pos, lvl.tiles)
-            print(principle.path) # PRINT STATEMENT CHECK
+        if principal.target is not None:
+            #path = helper_functions.a_star((principal.pos.x, principal.pos.y),(principal.target.x, principal.target.y),lvl.tiles)
+            target_pos = principal.target
+            principal.path = a_star((principal.pos.x, principal.pos.y), target_pos, lvl.tiles)
+            print(principal.path) # PRINT STATEMENT CHECK
 
             # Follow the first step of the path if it exists
             if principal.path:

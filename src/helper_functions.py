@@ -172,7 +172,3 @@ def a_star(start, goal, world):
         return reconstruct_path(visited_forward, visited_backward, meeting_point)
 
     return None
-
-
-
-iii
