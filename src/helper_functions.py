@@ -90,14 +90,13 @@ def move_points_of_interest(state, points_of_interest):
     return True
 
 def chase_player(state):
-
     # Get player's x, y coordinates
     player_pos = (state.player.pos.x, state.player.pos.y)
     
     # Set player's position as the Principal's target
     state.principal.target = player_pos
     
-    pass
+    state.principal.stage = 2 # set to chasing stage
 
 # code taken and revised from p1
 def heuristic(a, b):

@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+import time
 
 # our code files
 import behavior
@@ -25,7 +26,7 @@ class Player:
         self.speed = 5
 
 class Principal:
-    def __init__(self, pos=pygame.Rect(0, 0, 32, 32)):
+    def __init__(self, pos=pygame.Rect(0, 0, 32, 48)):
         # position
         self.pos = pos
         self.dir = 0
@@ -42,6 +43,7 @@ class Principal:
         self.heard_sound = None
         self.can_see_player = False
         self.last_seen_player_pos = None
+        self.last_seen_player_time = 0
 
         # properties
         self.speed = 4
@@ -60,12 +62,13 @@ class Locker:
         self.pos = pos
 
 class State:
-    def __init__(self, player, principal, items, lockers, level):
+    def __init__(self, player, principal, items, lockers, level, time):
         self.player = player
         self.principal = principal
         self.items = items
         self.lockers = lockers
         self.level = level
+        self.time = time
 
 def rect_overlap(r1, r2):
     return (min(r1.x + r1.width, r2.x + r2.width) - max(r1.x, r2.x), min(r1.y + r1.height, r2.y + r2.height) - max(r1.y, r2.y))
@@ -342,13 +345,14 @@ if __name__ == "__main__":
         if principal.can_see_player:
             # print("CAN SEE PLAYER")
             principal.last_seen_player_pos = (player.pos.x, player.pos.y)
+            principal.last_seen_player_time = time.time()
 
         # process principal
-        state = State(player, principal, items, lockers, lvl)
+        state = State(player, principal, items, lockers, lvl, time.time())
 
         result = behavior_tree.execute(state)
 
-        # print("BEHAVIOR:", result)
+        print("BEHAVIOR:", result)
 
         # pathfind_ticks += 1
 

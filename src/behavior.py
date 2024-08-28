@@ -44,10 +44,16 @@ def detect_sound(state):
     return state.principal.heard_sound != None
 
 def check_out_of_sight(state):
-    return not state.principal.can_see_player
+    return not state.principal.can_see_player and state.time - state.principal.last_seen_player_time >= 5000
 
 def revert_to_roam(state):
     state.principal.stage = 0
+
+def shift_to_patrol(state):
+    state.principal.stage = 1
+
+def last_known_position(state):
+    state.principal.target = state.principal.last_seen_player_pos
 
 def create_behavior_tree():
     root = Selector(name="Principle Behaviors")
@@ -75,7 +81,7 @@ def create_behavior_tree():
 
     # Wander to Points of Interest
     wander_to_points = Sequence(name="Wander to Points of Interest")
-    select_point = Action(move_points_of_interest)
+    select_point = Action(move_random_point)
     wander_to_points.child_nodes = [select_point]
 
     # Prioritize sight over sound
@@ -106,17 +112,17 @@ def create_behavior_tree():
     chase_player_action = Action(chase_player)
 
     # if player goes out of sight, move to last known pos
-    # move_to_last_seen = Action(last_known_position)
+    move_to_last_seen = Action(last_known_position)
 
     # check if player out of sight for >5 seconds
     check_out_of_sight_action = Check(check_out_of_sight)
 
     # chasing -> roaming after player is no longer seen (5+ seconds)
-    stop_chasing = Action(revert_to_roam)
+    stop_chasing = Action(shift_to_patrol)
 
     # Sequence
     chase_sequence = Sequence(name="Chasing Player")
-    chase_sequence.child_nodes = [chase_player_action, check_out_of_sight_action, stop_chasing] # move_to_last_seen
+    chase_sequence.child_nodes = [chase_player_action, check_out_of_sight_action, stop_chasing, move_to_last_seen]
 
     # NOTE: This shouldn't need to be modified
     root.child_nodes = [roam_stage, patrol_stage, chase_stage]
