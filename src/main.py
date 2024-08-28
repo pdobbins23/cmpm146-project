@@ -1,8 +1,8 @@
 import pygame
-import json
-import LdtkJson
+
 # our code files
 import behavior
+import level
 
 # Player state data
 class Player:
@@ -18,12 +18,16 @@ class Principle:
         # position
         self.pos = pos
 
+        # current target location for pathfinding
+        self.target = pygame.Vector2(0, 0)
+
+        # state (0 = roam, 1 = patrol, 2 = chase)
+        self.stage = 0
+        self.stunned = False
+
         # properties
         self.speed = 4
 
-def coord_to_tile(x, y):
-    from math import floor
-    return (floor(x / 32), floor(y / 32))
 
 def rect_overlap(r1, r2):
     return (min(r1.x + r1.width, r2.x + r2.width) - max(r1.x, r2.x), min(r1.y + r1.height, r2.y + r2.height) - max(r1.y, r2.y))
@@ -49,14 +53,7 @@ if __name__ == "__main__":
     player = Player(pygame.Rect(50, 50, 32, 32))
     principle = Principle()
 
-    with open("assets/level.json", "r") as file:
-        level_data = file.read()
-    ldtk_level = LdtkJson.ldtk_json_from_dict(json.loads(level_data))
-
-    level = ldtk_level.levels[0]
-    layer = level.layer_instances[0]
-
-    print("LEVEL:", len(layer.grid_tiles))
+    lvl = level.Level("assets/level.json", tile_size=32)
 
     running = True
 
@@ -82,24 +79,22 @@ if __name__ == "__main__":
             player.pos.x += player.speed
 
         # check for player collision
-        tl = coord_to_tile(player.pos.x, player.pos.y)
-        br = coord_to_tile(player.pos.x + player.pos.width, player.pos.y + player.pos.height)
+        tl = lvl.coord_to_tile(player.pos.x, player.pos.y)
+        br = lvl.coord_to_tile(player.pos.x + player.pos.width, player.pos.y + player.pos.height)
 
         # loop over all tiles the player is touching, checking collision with each
         for y in range(tl[1], br[1] + 1):
             for x in range(tl[0], br[0] + 1):
-                tile_idx = y * layer.c_wid + x
-
                 collision = False
 
                 # we are colliding with a solid wall tile
                 # TODO: Remove hard-coded tile type checks, use LDtk features instead
-                if layer.grid_tiles[tile_idx].t == 0:
+                if lvl.tiles[y][x].t == 0:
                     collision = True
 
                 # resolve collision
                 if collision:
-                    tile_rect = pygame.Rect(x * 32, y * 32, 32, 32)
+                    tile_rect = pygame.Rect(x * lvl.tile_size, y * lvl.tile_size, lvl.tile_size, lvl.tile_size)
                     overlap = rect_overlap(player.pos, tile_rect)
 
                     # vertical resolution
@@ -125,33 +120,31 @@ if __name__ == "__main__":
         # lock camera view to level
         if camera.x < 0:
             camera.x = 0
-        elif camera.x + window_width > (layer.c_wid * 32):
-            camera.x = (layer.c_wid * 32) - window_width
+        elif camera.x + window_width > (lvl.width * lvl.tile_size):
+            camera.x = (lvl.width * lvl.tile_size) - window_width
 
         if camera.y < 0:
             camera.y = 0
-        elif camera.y + window_height > (layer.c_hei * 32):
-            camera.y = (layer.c_hei * 32) - window_height
+        elif camera.y + window_height > (lvl.height * lvl.tile_size):
+            camera.y = (lvl.height * lvl.tile_size) - window_height
 
         # clear the screen with a purple color
         screen.fill("black")
 
         # draw level
-        for i, tile in enumerate(layer.grid_tiles):
-            from math import floor
-            
-            x = floor(i % layer.c_wid)
-            y = floor(i / layer.c_wid)
+        for y in range(0, lvl.height):
+            for x in range(0, lvl.width):
+                r = pygame.Rect(x * lvl.tile_size - camera.x, y * lvl.tile_size - camera.y, lvl.tile_size, lvl.tile_size)
 
-            r = pygame.Rect(x * 32 - camera.x, y * 32 - camera.y, 32, 32)
+                tile = lvl.tiles[y][x]
 
-            # TODO: Switch to using the information from LDtk to render proper tile texture
-            if tile.t == 0:
-                pygame.draw.rect(screen, "purple", r)
-            elif tile.t == 1:
-                pygame.draw.rect(screen, "blue", r)
-            else:
-                print("UNKNOWN TILE:", tile.t)
+                # TODO: Switch to using the information from LDtk to render proper tile texture
+                if tile.t == 0:
+                    pygame.draw.rect(screen, "purple", r)
+                elif tile.t == 1:
+                    pygame.draw.rect(screen, "blue", r)
+                else:
+                    print("UNKNOWN TILE:", tile.t)
 
         # draw player
         pygame.draw.rect(screen, "green", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
