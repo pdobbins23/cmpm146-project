@@ -41,6 +41,7 @@ class Principal:
         self.health = 10
         self.heard_sound = None
         self.can_see_player = False
+        self.last_seen_player_pos = None
 
         # properties
         self.speed = 4
@@ -71,8 +72,8 @@ def rect_overlap(r1, r2):
 
 if __name__ == "__main__":
     # print behavior tree for inspection
-    # behavior_tree = behavior.create_behavior_tree()
-    # print(behavior_tree.tree_to_string())
+    behavior_tree = behavior.create_behavior_tree()
+    print(behavior_tree.tree_to_string())
 
     # start game
     pygame.init()
@@ -338,21 +339,29 @@ if __name__ == "__main__":
             if not obstruction:
                 principal.can_see_player = True
 
-        # if principal.can_see_player:
+        if principal.can_see_player:
             # print("CAN SEE PLAYER")
+            principal.last_seen_player_pos = (player.pos.x, player.pos.y)
 
         # process principal
         state = State(player, principal, items, lockers, lvl)
 
         result = behavior_tree.execute(state)
 
-        print("BEHAVIOR:", result)
+        # print("BEHAVIOR:", result)
 
-        pathfind_ticks += 1
+        # pathfind_ticks += 1
 
-        if pathfind_ticks > 10:
-            pathfind_ticks = 0
-            principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
+        if principal.stage == 0:
+            print("ROAMING")
+        if principal.stage == 1:
+            print("PATROLLING")
+        if principal.stage == 2:
+            print("CHASING")
+
+        # if pathfind_ticks > 10:
+            # pathfind_ticks = 0
+            # principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
 
         # pathfinding
         if principal.target != None:

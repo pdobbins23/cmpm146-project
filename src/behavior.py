@@ -41,7 +41,13 @@ def patrol_area(state):
     state.current_patrol_point = next_point
 
 def detect_sound(state):
-    return state.principal.heard_sound != None    
+    return state.principal.heard_sound != None
+
+def check_out_of_sight(state):
+    return not state.principal.can_see_player
+
+def revert_to_roam(state):
+    state.principal.stage = 0
 
 def create_behavior_tree():
     root = Selector(name="Principle Behaviors")
@@ -62,10 +68,10 @@ def create_behavior_tree():
     sight_behaviors.child_nodes = [see_student, chase_student]
 
     # Sound-related behavior
-    investigate_sounds = Sequence(name="Investigate Sounds")
+    investigate_sounds_seq = Sequence(name="Investigate Sounds")
     check_for_sound = Check(detect_sound)  # Unified sound check
     move_towards_sound = Action(investigate_sounds)
-    investigate_sounds.child_nodes = [check_for_sound, move_towards_sound]
+    investigate_sounds_seq.child_nodes = [check_for_sound, move_towards_sound]
 
     # Wander to Points of Interest
     wander_to_points = Sequence(name="Wander to Points of Interest")
@@ -73,7 +79,7 @@ def create_behavior_tree():
     wander_to_points.child_nodes = [select_point]
 
     # Prioritize sight over sound
-    prioritize_sight.child_nodes = [sight_behaviors, investigate_sounds]
+    prioritize_sight.child_nodes = [sight_behaviors, investigate_sounds_seq]
 
     # Combine all roam behaviors
     roam_stage.child_nodes = [check_roam_status, prioritize_sight, wander_to_points]
@@ -100,7 +106,7 @@ def create_behavior_tree():
     chase_player_action = Action(chase_player)
 
     # if player goes out of sight, move to last known pos
-    move_to_last_seen = Action(last_known_position)
+    # move_to_last_seen = Action(last_known_position)
 
     # check if player out of sight for >5 seconds
     check_out_of_sight_action = Check(check_out_of_sight)
@@ -110,7 +116,7 @@ def create_behavior_tree():
 
     # Sequence
     chase_sequence = Sequence(name="Chasing Player")
-    chase_sequence.child_nodes = [chase_player_action, move_to_last_seen, check_out_of_sight_action, stop_chasing]
+    chase_sequence.child_nodes = [chase_player_action, check_out_of_sight_action, stop_chasing] # move_to_last_seen
 
     # NOTE: This shouldn't need to be modified
     root.child_nodes = [roam_stage, patrol_stage, chase_stage]
