@@ -10,13 +10,13 @@ from helper_functions import check_is_player_in_front, chase_player, detect_soun
 
 
 def check_is_roaming(state):
-    return state.is_roaming
+    return state.principle.stage == 0
 
 def check_is_patrolling(state):
-    return state.is_patrolling
+    return state.principle.stage == 1
 
 def check_is_chasing(state):
-    return state.is_chasing
+    return state.principle.stage == 2
         
 def patrol_area(state):
     """

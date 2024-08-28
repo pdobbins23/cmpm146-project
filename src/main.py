@@ -1,15 +1,21 @@
 import pygame
-from helper_functions import a_star
+import random
 
 # our code files
 import behavior
 import level
+from helper_functions import a_star
 
 # Player state data
 class Player:
     def __init__(self, pos=pygame.Rect(0, 0, 32, 32)):
         # position
         self.pos = pos
+        self.dir = 0
+
+        # item
+        self.holding_item = None
+        self.throw_speed = 10
 
         # properties
         self.speed = 5
@@ -32,6 +38,10 @@ class Principle:
         # properties
         self.speed = 4
 
+class Item:
+    def __init__(self, pos=pygame.Rect(0, 0, 16, 16)):
+        self.pos = pos
+        self.vel = pygame.Vector2(0, 0)
 
 def rect_overlap(r1, r2):
     return (min(r1.x + r1.width, r2.x + r2.width) - max(r1.x, r2.x), min(r1.y + r1.height, r2.y + r2.height) - max(r1.y, r2.y))
@@ -59,6 +69,14 @@ if __name__ == "__main__":
 
     lvl = level.Level("assets/demo_level.json.ldtk", tile_size=32)
 
+    items = []
+
+    # generate items
+    for y in range(0, lvl.height):
+        for x in range(0, lvl.width):
+            if lvl.tiles[y][x].t == 1 and random.random() < 0.01:
+                items.append(Item(pygame.Rect(x * lvl.tile_size, y * lvl.tile_size, 16, 16)))
+
     running = True
 
     # game loop
@@ -74,13 +92,104 @@ if __name__ == "__main__":
 
         # process player movement
         if keys[pygame.K_UP]:
+            player.dir = 0
             player.pos.y -= player.speed
         if keys[pygame.K_DOWN]:
+            player.dir = 1
             player.pos.y += player.speed
         if keys[pygame.K_LEFT]:
+            player.dir = 2
             player.pos.x -= player.speed
         if keys[pygame.K_RIGHT]:
+            player.dir = 3
             player.pos.x += player.speed
+
+        if keys[pygame.K_SPACE] and player.holding_item != None:
+            if player.dir == 0:
+                items[player.holding_item].vel = pygame.Vector2(0, -player.throw_speed)
+            elif player.dir == 1:
+                items[player.holding_item].vel = pygame.Vector2(0, player.throw_speed)
+            elif player.dir == 2:
+                items[player.holding_item].vel = pygame.Vector2(-player.throw_speed, 0)
+            elif player.dir == 3:
+                items[player.holding_item].vel = pygame.Vector2(player.throw_speed, 0)
+
+            player.holding_item = None
+
+        # process items
+        for i, item in enumerate(items):
+            collision = rect_overlap(item.pos, player.pos)
+
+            if item.vel.x == 0 and item.vel.y == 0 and player.holding_item == None and collision[0] > 0 and collision[1] > 0:
+                player.holding_item = i
+            
+            if player.holding_item == i:
+                item.pos.x = player.pos.x + player.pos.width / 2 - item.pos.width / 2
+                item.pos.y = player.pos.y + player.pos.height / 2 - item.pos.height / 2
+
+                if player.dir == 0:
+                    item.pos.y -= player.pos.height
+                elif player.dir == 1:
+                    item.pos.y += player.pos.height
+                elif player.dir == 2:
+                    item.pos.x -= player.pos.width
+                elif player.dir == 3:
+                    item.pos.x += player.pos.width
+
+            if item.vel.x != 0 or item.vel.y != 0:
+                # item moving
+                item.pos = pygame.Rect(item.pos.x + item.vel.x, item.pos.y + item.vel.y, item.pos.width, item.pos.height)
+
+                item.vel.x *= 0.95
+                item.vel.y *= 0.95
+
+                if abs(item.vel.x) < 0.1 and abs(item.vel.y) < 0.1:
+                    item.vel.x = 0
+                    item.vel.y = 0
+
+            # item collision
+            tl = lvl.coord_to_tile(item.pos.x, item.pos.y)
+            br = lvl.coord_to_tile(item.pos.x + item.pos.width, item.pos.y + item.pos.height)
+
+            # loop over all tiles the player is touching, checking collision with each
+            for y in range(tl[1], br[1] + 1):
+                for x in range(tl[0], br[0] + 1):
+                    collision = False
+
+                    # we are colliding with a solid wall tile
+                    # TODO: Remove hard-coded tile type checks, use LDtk features instead
+                    if lvl.tiles[y][x].t == 0:
+                        collision = True
+
+                    # resolve collision
+                    if collision:
+                        tile_rect = pygame.Rect(x * lvl.tile_size, y * lvl.tile_size, lvl.tile_size, lvl.tile_size)
+                        overlap = rect_overlap(item.pos, tile_rect)
+
+                        # vertical resolution
+                        if overlap[0] > overlap[1]:
+                            # if item vertical midpoint is at or above tile vertical midpoint, resolve up
+                            if item.pos.y + (item.pos.height / 2) <= tile_rect.y + (tile_rect.height / 2):
+                                item.pos.y = tile_rect.y - item.pos.height
+                                # bounce
+                                item.vel.y *= -0.35
+                            # resolve down
+                            else:
+                                item.pos.y = tile_rect.y + tile_rect.height
+                                # bounce
+                                item.vel.y *= -0.35
+                        # horizontal resolution
+                        else:
+                            # if item horizontal midpoint is at or left of tile horizontal midpoint, resolve left
+                            if item.pos.x + (item.pos.width / 2) <= tile_rect.x + (tile_rect.width / 2):
+                                item.pos.x = tile_rect.x - item.pos.width
+                                # bounce
+                                item.vel.x *= -0.35
+                            # resolve right
+                            else:
+                                item.pos.x = tile_rect.x + tile_rect.width
+                                # bounce
+                                item.vel.x *= -0.35
 
         # process principle
         # TODO: Invoke behavior tree with current state
@@ -186,6 +295,10 @@ if __name__ == "__main__":
 
         # draw principle
         pygame.draw.rect(screen, "red", pygame.Rect(principle.pos.x - camera.x, principle.pos.y - camera.y, principle.pos.width, principle.pos.height))
+
+        # draw items
+        for item in items:
+            pygame.draw.rect(screen, "brown", pygame.Rect(item.pos.x - camera.x, item.pos.y - camera.y, item.pos.width, item.pos.height))
 
         # swap buffers
         pygame.display.flip()
