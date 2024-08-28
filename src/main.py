@@ -28,6 +28,7 @@ class Principal:
     def __init__(self, pos=pygame.Rect(0, 0, 32, 32)):
         # position
         self.pos = pos
+        self.dir = 0
 
         # current target location for pathfinding
         self.target = None
@@ -39,6 +40,7 @@ class Principal:
         self.stage = 0
         self.health = 10
         self.heard_sound = None
+        self.can_see_player = False
 
         # properties
         self.speed = 4
@@ -69,8 +71,8 @@ def rect_overlap(r1, r2):
 
 if __name__ == "__main__":
     # print behavior tree for inspection
-    behavior_tree = behavior.create_behavior_tree()
-    print(behavior_tree.tree_to_string())
+    # behavior_tree = behavior.create_behavior_tree()
+    # print(behavior_tree.tree_to_string())
 
     # start game
     pygame.init()
@@ -286,8 +288,60 @@ if __name__ == "__main__":
                                 # bounce
                                 item.vel.x *= -0.35
 
+        # process line of sight
+        principal.can_see_player = False
+        
+        vdx = player.pos.x - principal.pos.x
+        vdy = player.pos.y - principal.pos.y
+         
+        player_angle = math.atan2(vdy, vdx)
+
+        if principal.dir == 0:
+            principal_angle = -math.pi / 2
+        elif principal.dir == 1:
+            principal_angle = math.pi / 2
+        elif principal.dir == 2:
+            principal_angle = math.pi
+        else:
+            principal_angle = 0
+
+        angle_diff = math.fabs(principal_angle - player_angle)
+
+        # player within viewing angle (~80 degrees)
+        if angle_diff < 1.4:
+            obstruction = False
+
+            # cast ray from principal position to player, check for tile collisions
+            dist = math.sqrt(vdx**2 + vdy**2)
+            inc = lvl.tile_size / 2
+
+            ddx = vdx / dist * inc
+            ddy = vdy / dist * inc
+
+            rpos = [principal.pos.x, principal.pos.y]
+
+            while True:
+                rpos[0] += ddx
+                rpos[1] += ddy
+
+                tile = lvl.coord_to_tile(rpos[0], rpos[1])
+
+                if lvl.tiles[tile[1]][tile[0]].t == 0:
+                    obstruction = True
+                    break
+
+                player_tile = lvl.coord_to_tile(player.pos.x, player.pos.y)
+
+                if tile[0] == player_tile[0] and tile[1] == player_tile[1]:
+                    break
+
+            if not obstruction:
+                principal.can_see_player = True
+
+        # if principal.can_see_player:
+            # print("CAN SEE PLAYER")
+
         # process principal
-        # TODO: Invoke behavior tree with current state
         state = State(player, principal, items, lockers, lvl)
 
         result = behavior_tree.execute(state)
@@ -317,7 +371,16 @@ if __name__ == "__main__":
             if distance != 0:
                 dx, dy = dx / distance * principal.speed, dy / distance * principal.speed
 
-            print(dx, dy, distance, principal.path)
+            # print(dx, dy, distance, principal.path)
+
+            if dx < 0:
+                principal.dir = 2
+            elif dx > 0:
+                principal.dir = 3
+            elif dy < 0:
+                principal.dir = 0
+            elif dy > 0:
+                principal.dir = 1
 
             principal.pos.x += dx
             principal.pos.y += dy
