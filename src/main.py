@@ -373,8 +373,8 @@ if __name__ == "__main__":
         if principal.path:
             next_step = principal.path[0]
 
-            dx = next_step[0] - principal.pos.x
-            dy = next_step[1] - principal.pos.y
+            dx = next_step[0] - (principal.pos.x + principal.pos.width / 2)
+            dy = next_step[1] - (principal.pos.y + principal.pos.height / 2)
 
             distance = math.sqrt(dx**2 + dy**2)
             if distance != 0:
