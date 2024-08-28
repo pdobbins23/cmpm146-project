@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 
 # our code files
 import behavior
@@ -139,7 +140,7 @@ if __name__ == "__main__":
             if pressed_e:
                 player.locker = None
 
-        if keys[pygame.K_SPACE] and player.holding_item != None:
+        if keys[pygame.K_SPACE] and player.holding_item != None and player.locker == None:
             if player.dir == 0:
                 items[player.holding_item].vel = pygame.Vector2(0, -player.throw_speed)
             elif player.dir == 1:
@@ -237,9 +238,45 @@ if __name__ == "__main__":
 
         # process principle
         # TODO: Invoke behavior tree with current state
+        # pathfind to current principle target
+        if principle.target is not None:
+            print("Target is set.")
+        else:
+            print("Target is None.")
+
+        principle.target = (100, 100)
+        principle.path = [(50, 50), (60, 60), (70, 70)]
+
+        if principle.path is not None:
+            print("Principle has a path to follow.")
+        else:
+            print("Principle does not have a path.")
+
+        if principle.target is not None:
+            #path = helper_functions.a_star((principle.pos.x, principle.pos.y),(principle.target.x, principle.target.y),lvl.tiles)
+            target_pos = principle.target
+            principle.path = a_star((principle.pos.x, principle.pos.y), target_pos, lvl.tiles)
+            print(principle.path)
+
+            # Follow the first step of the path if it exists
+            if principle.path:
+                next_step = principle.path[0]
+                dx = next_step[0] - principle.pos.x
+                dy = next_step[1] - principle.pos.y
+
+                distance = math.sqrt(dx2 + dy2)
+                if distance != 0:
+                    dx, dy = dx / distance * principle.speed, dy / distance * principle.speed
+
+                principle.pos.x += dx
+                principle.pos.y += dy
+
+                # If reached the target step, remove it from the path
+                if math.hypot(principle.pos.x - next_step[0], principle.pos.y - next_step[1]) < principle.speed:
+                    principle.path.pop(0)
 
         # pathfind to current principle target
-        principle.target = player.pos
+        '''principle.target = player.pos
         
         # Pathfinding logic
         if principle.target:
@@ -264,7 +301,7 @@ if __name__ == "__main__":
                 if path:
                     next_point = path[0]
                 else:
-                    principle.target = None
+                    principle.target = None'''
 
         # check for player collision
         tl = lvl.coord_to_tile(player.pos.x, player.pos.y)
@@ -349,7 +386,10 @@ if __name__ == "__main__":
         pygame.draw.rect(screen, "red", pygame.Rect(principle.pos.x - camera.x, principle.pos.y - camera.y, principle.pos.width, principle.pos.height))
 
         # draw items
-        for item in items:
+        for i, item in enumerate(items):
+            if player.locker != None and i == player.holding_item:
+                continue
+            
             pygame.draw.rect(screen, "brown", pygame.Rect(item.pos.x - camera.x, item.pos.y - camera.y, item.pos.width, item.pos.height))
 
         # swap buffers
