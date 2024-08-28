@@ -6,15 +6,16 @@
 from nodes import *
 from random import randint
 from math import sqrt
+from helper_functions import *
 
 def check_is_roaming(state):
-    return state.is_roaming
+    return state.principal.stage == 0
 
 def check_is_patrolling(state):
-    return state.is_patrolling
+    return state.principal.stage == 1
 
 def check_is_chasing(state):
-    return state.is_chasing
+    return state.principal.stage == 2
         
 def patrol_area(state):
     """
@@ -38,7 +39,9 @@ def patrol_area(state):
     
     # update patrol state
     state.current_patrol_point = next_point
-    
+
+def detect_sound(state):
+    return state.principal.heard_sound != None    
 
 def create_behavior_tree():
     root = Selector(name="Principle Behaviors")
@@ -97,7 +100,7 @@ def create_behavior_tree():
     chase_player_action = Action(chase_player)
 
     # if player goes out of sight, move to last known pos
-    move_to_last_seen = ACtion(last_known_position)
+    move_to_last_seen = Action(last_known_position)
 
     # check if player out of sight for >5 seconds
     check_out_of_sight_action = Check(check_out_of_sight)

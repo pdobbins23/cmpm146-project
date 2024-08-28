@@ -56,13 +56,21 @@ class Locker:
     def __init__(self, pos=pygame.Rect(0, 0, 32, 64)):
         self.pos = pos
 
+class State:
+    def __init__(self, player, principal, items, lockers, level):
+        self.player = player
+        self.principal = principal
+        self.items = items
+        self.lockers = lockers
+        self.level = level
+
 def rect_overlap(r1, r2):
     return (min(r1.x + r1.width, r2.x + r2.width) - max(r1.x, r2.x), min(r1.y + r1.height, r2.y + r2.height) - max(r1.y, r2.y))
 
 if __name__ == "__main__":
     # print behavior tree for inspection
-    # behavior_tree = behavior.create_behavior_tree()
-    # print(behavior_tree.tree_to_string())
+    behavior_tree = behavior.create_behavior_tree()
+    print(behavior_tree.tree_to_string())
 
     # start game
     pygame.init()
@@ -280,12 +288,17 @@ if __name__ == "__main__":
 
         # process principal
         # TODO: Invoke behavior tree with current state
+        state = State(player, principal, items, lockers, lvl)
+
+        result = behavior_tree.execute(state)
+
+        print("BEHAVIOR:", result)
 
         pathfind_ticks += 1
 
         if pathfind_ticks > 10:
             pathfind_ticks = 0
-            principal.target = (player.pos.x, player.pos.y)
+            principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
 
         # pathfinding
         if principal.target != None:
@@ -310,7 +323,7 @@ if __name__ == "__main__":
             principal.pos.y += dy
 
             # If reached the target step, remove it from the path
-            if distance < principal.speed:
+            if distance < principal.speed * 1.5:
                 principal.path.pop(0)
             
         # principal collision
