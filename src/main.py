@@ -54,7 +54,7 @@ if __name__ == "__main__":
     player = Player(pygame.Rect(50, 50, 32, 32))
     principle = Principle(pygame.Rect(100, 100, 32, 32))
 
-    lvl = level.Level("assets/level.json", tile_size=32)
+    lvl = level.Level("assets/demo_level.json.ldtk", tile_size=32)
 
     running = True
 

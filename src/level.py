@@ -15,6 +15,8 @@ class Level:
         self.width = layer.c_wid
         self.height = layer.c_hei
 
+        print("Loaded level with", len(lvl.layer_instances), "layers, layer[0] is", layer.c_wid, "x", layer.c_hei, "and has", len(layer.grid_tiles), "tiles")
+
         self.tiles = [[layer.grid_tiles[y * self.width + x] for x in range(0, self.width)] for y in range(0, self.height)]
 
     def coord_to_tile(self, x, y):
