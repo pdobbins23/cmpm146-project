@@ -24,7 +24,7 @@ class Player:
         # properties
         self.speed = 5
 
-class Principle:
+class Principal:
     def __init__(self, pos=pygame.Rect(0, 0, 32, 32)):
         # position
         self.pos = pos
@@ -38,6 +38,7 @@ class Principle:
         # state (0 = roam, 1 = patrol, 2 = chase)
         self.stage = 0
         self.health = 10
+        self.heard_sound = None
 
         # properties
         self.speed = 4
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     camera = pygame.Vector2(0, 0)
     
     player = Player(pygame.Rect(50, 50, 32, 32))
-    principle = Principle(pygame.Rect(100, 100, 32, 32))
+    principal = Principal(pygame.Rect(100, 100, 32, 32))
 
     lvl = level.Level("assets/demo_level.json.ldtk", tile_size=32)
 
@@ -183,11 +184,11 @@ if __name__ == "__main__":
                     item.vel.x = 0
                     item.vel.y = 0
 
-                # principle collision
-                principle_collision = rect_overlap(item.pos, principle.pos)
+                # principal collision
+                principal_collision = rect_overlap(item.pos, principal.pos)
 
-                if principle_collision[0] > 0 and principle_collision[1] > 0:
-                    principle.health -= 1
+                if principal_collision[0] > 0 and principal_collision[1] > 0:
+                    principal.health -= 1
 
                     item.vel.x *= -0.35
                     item.vel.y *= -0.35
@@ -236,72 +237,72 @@ if __name__ == "__main__":
                                 # bounce
                                 item.vel.x *= -0.35
 
-        # process principle
+        # process principal
         # TODO: Invoke behavior tree with current state
-        # pathfind to current principle target
-        if principle.target is not None:
+        # pathfind to current principal target
+        if principal.target is not None:
             print("Target is set.")
         else:
             print("Target is None.")
 
-        principle.target = (100, 100)
-        principle.path = [(50, 50), (60, 60), (70, 70)]
+        principal.target = (100, 100)
+        principal.path = [(50, 50), (60, 60), (70, 70)]
 
-        if principle.path is not None:
-            print("Principle has a path to follow.")
+        if principal.path is not None:
+            print("Principal has a path to follow.")
         else:
-            print("Principle does not have a path.")
+            print("Principal does not have a path.")
 
-        if principle.target is not None:
-            #path = helper_functions.a_star((principle.pos.x, principle.pos.y),(principle.target.x, principle.target.y),lvl.tiles)
-            target_pos = principle.target
-            principle.path = a_star((principle.pos.x, principle.pos.y), target_pos, lvl.tiles)
-            print(principle.path)
+        if principal.target is not None:
+            #path = helper_functions.a_star((principal.pos.x, principal.pos.y),(principal.target.x, principal.target.y),lvl.tiles)
+            target_pos = principal.target
+            principal.path = a_star((principal.pos.x, principal.pos.y), target_pos, lvl.tiles)
+            print(principal.path)
 
             # Follow the first step of the path if it exists
-            if principle.path:
-                next_step = principle.path[0]
-                dx = next_step[0] - principle.pos.x
-                dy = next_step[1] - principle.pos.y
+            if principal.path:
+                next_step = principal.path[0]
+                dx = next_step[0] - principal.pos.x
+                dy = next_step[1] - principal.pos.y
 
                 distance = math.sqrt(dx2 + dy2)
                 if distance != 0:
-                    dx, dy = dx / distance * principle.speed, dy / distance * principle.speed
+                    dx, dy = dx / distance * principal.speed, dy / distance * principal.speed
 
-                principle.pos.x += dx
-                principle.pos.y += dy
+                principal.pos.x += dx
+                principal.pos.y += dy
 
                 # If reached the target step, remove it from the path
-                if math.hypot(principle.pos.x - next_step[0], principle.pos.y - next_step[1]) < principle.speed:
-                    principle.path.pop(0)
+                if math.hypot(principal.pos.x - next_step[0], principal.pos.y - next_step[1]) < principal.speed:
+                    principal.path.pop(0)
 
-        # pathfind to current principle target
-        '''principle.target = player.pos
+        # pathfind to current principal target
+        '''principal.target = player.pos
         
         # Pathfinding logic
-        if principle.target:
-            # Convert principle's target to tuple for a_star
-            target_pos = (principle.target.x, principle.target.y)
-            principle.path = a_star((principle.pos.x, principle.pos.y), target_pos, lvl.tiles)
+        if principal.target:
+            # Convert principal's target to tuple for a_star
+            target_pos = (principal.target.x, principal.target.y)
+            principal.path = a_star((principal.pos.x, principal.pos.y), target_pos, lvl.tiles)
 
-            print(principle.path)
+            print(principal.path)
 
         # follow path logic
-        if principle.path:
-            # Move principle towards the next point in the path
-            next_point = principle.path[0]
-            direction = pygame.Vector2(next_point[0] - principle.pos.x, next_point[1] - principle.pos.y).normalize()
-            principle.pos.x += direction.x * principle.speed
-            principle.pos.y += direction.y * principle.speed
+        if principal.path:
+            # Move principal towards the next point in the path
+            next_point = principal.path[0]
+            direction = pygame.Vector2(next_point[0] - principal.pos.x, next_point[1] - principal.pos.y).normalize()
+            principal.pos.x += direction.x * principal.speed
+            principal.pos.y += direction.y * principal.speed
 
-            # Check if principle has reached the next point
-            if pygame.math.Vector2(principle.pos.x, principle.pos.y).distance_to(pygame.math.Vector2(next_point[0], next_point[1])) < principle.speed:
+            # Check if principal has reached the next point
+            if pygame.math.Vector2(principal.pos.x, principal.pos.y).distance_to(pygame.math.Vector2(next_point[0], next_point[1])) < principal.speed:
                 # Remove the reached point from the path
                 path.pop(0)
                 if path:
                     next_point = path[0]
                 else:
-                    principle.target = None'''
+                    principal.target = None'''
 
         # check for player collision
         tl = lvl.coord_to_tile(player.pos.x, player.pos.y)
@@ -382,8 +383,8 @@ if __name__ == "__main__":
         if player.locker == None:
             pygame.draw.rect(screen, "green", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
 
-        # draw principle
-        pygame.draw.rect(screen, "red", pygame.Rect(principle.pos.x - camera.x, principle.pos.y - camera.y, principle.pos.width, principle.pos.height))
+        # draw principal
+        pygame.draw.rect(screen, "red", pygame.Rect(principal.pos.x - camera.x, principal.pos.y - camera.y, principal.pos.width, principal.pos.height))
 
         # draw items
         for i, item in enumerate(items):
