@@ -15,6 +15,7 @@ def check_is_patrolling(state):
     return state.principal.stage == 1
 
 def check_is_chasing(state):
+    print("CHECKING CHASING")
     return state.principal.stage == 2
         
 def patrol_area(state):
