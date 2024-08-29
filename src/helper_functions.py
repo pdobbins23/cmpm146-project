@@ -238,4 +238,6 @@ def a_star(level, start_pos, goal_pos):
         next_pos = (cur[0] * level.tile_size + level.tile_size / 2, cur[1] * level.tile_size + level.tile_size / 2)
         path.insert(0, next_pos)
 
+    del path[0]
+
     return path

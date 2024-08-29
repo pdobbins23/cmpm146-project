@@ -34,6 +34,9 @@ class Principal:
         # current target location for pathfinding
         self.target = None
 
+        # view angle (~140 degrees)
+        self.viewing_angle = 2.45
+
         # current pathfinding path
         self.path = None
 
@@ -306,13 +309,21 @@ if __name__ == "__main__":
             principal_angle = math.pi / 2
         elif principal.dir == 2:
             principal_angle = math.pi
-        else:
+        elif principal.dir == 3:
             principal_angle = 0
+        elif principal.dir == 4:
+            principal_angle = -math.pi / 4
+        elif principal.dir == 5:
+            principal_angle = 3 * -math.pi / 4
+        elif principal.dir == 6:
+            principal_angle = 3 * math.pi / 4
+        elif principal.dir == 7:
+            principal_angle = math.pi / 4
 
         angle_diff = math.fabs(principal_angle - player_angle)
 
-        # player within viewing angle (~80 degrees)
-        if angle_diff < 1.4:
+        # player within viewing angle
+        if angle_diff <= principal.viewing_angle / 2:
             obstruction = False
 
             # cast ray from principal position to player, check for tile collisions
@@ -344,7 +355,6 @@ if __name__ == "__main__":
                 principal.can_see_player = True
 
         if principal.can_see_player:
-            # print("CAN SEE PLAYER")
             principal.last_seen_player_pos = (player.pos.x, player.pos.y)
             principal.last_seen_player_time = time.time()
 
@@ -357,14 +367,14 @@ if __name__ == "__main__":
 
         pathfind_ticks += 1
 
-        if principal.stage == 0:
-            print("ROAMING")
-        if principal.stage == 1:
-            print("PATROLLING")
-        if principal.stage == 2:
-            print("CHASING")
+        # if principal.stage == 0:
+            # print("ROAMING")
+        # if principal.stage == 1:
+            # print("PATROLLING")
+        # if principal.stage == 2:
+            # print("CHASING")
 
-        if pathfind_ticks > 10:
+        if pathfind_ticks > 0:
             pathfind_ticks = 0
             principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
 
@@ -388,13 +398,24 @@ if __name__ == "__main__":
             # print(dx, dy, distance, principal.path)
 
             if dx < 0:
-                principal.dir = 2
+                if dy < 0:
+                    principal.dir = 4
+                elif dy > 0:
+                    principal.dir = 6
+                else:
+                    principal.dir = 2
             elif dx > 0:
-                principal.dir = 3
-            elif dy < 0:
-                principal.dir = 0
-            elif dy > 0:
-                principal.dir = 1
+                if dy < 0:
+                    principal.dir = 5
+                elif dy > 0:
+                    principal.dir = 7
+                else:
+                    principal.dir = 3
+            else:
+                if dy < 0:
+                    principal.dir = 0
+                elif dy > 0:
+                    principal.dir = 1
 
             principal.pos.x += dx
             principal.pos.y += dy
@@ -480,14 +501,101 @@ if __name__ == "__main__":
 
         # draw player
         if player.locker == None:
-            pygame.draw.rect(screen, "green", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
+            pygame.draw.rect(screen, "green" if not principal.can_see_player else "yellow", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
 
         # draw principal
         pygame.draw.rect(screen, "red", pygame.Rect(principal.pos.x - camera.x, principal.pos.y - camera.y, principal.pos.width, principal.pos.height))
 
+        # draw principal direction
+        dir_mark = pygame.Rect(0, 0, 8, 8)
+
+        dir_mark.x = principal.pos.x + principal.pos.width / 2 - dir_mark.width / 2
+        dir_mark.y = principal.pos.y + principal.pos.height / 2 - dir_mark.height / 2
+
+        if principal.dir == 0:
+            dir_mark.y -= principal.pos.height
+        elif principal.dir == 1:
+            dir_mark.y += principal.pos.height
+        elif principal.dir == 2:
+            dir_mark.x -= principal.pos.width
+        elif principal.dir == 3:
+            dir_mark.x += principal.pos.width
+        elif principal.dir == 4:
+            dir_mark.x -= principal.pos.width
+            dir_mark.y -= principal.pos.height
+        elif principal.dir == 5:
+            dir_mark.x += principal.pos.width
+            dir_mark.y -= principal.pos.height
+        elif principal.dir == 6:
+            dir_mark.x -= principal.pos.width
+            dir_mark.y += principal.pos.height
+        elif principal.dir == 7:
+            dir_mark.x += principal.pos.width
+            dir_mark.y += principal.pos.height
+
+        pygame.draw.rect(screen, "black", pygame.Rect(dir_mark.x - camera.x, dir_mark.y - camera.y, dir_mark.width, dir_mark.height))
+
         # draw principal path
         if principal.path and len(principal.path) >= 2:
             pygame.draw.lines(screen, "orange", False, [(pos[0] - camera.x, pos[1] - camera.y) for pos in principal.path])
+
+        # draw principal view angle
+        dir_mark_pos = pygame.Vector2(dir_mark.x + dir_mark.width / 2, dir_mark.y + dir_mark.height)
+        principal_pos = pygame.Vector2(principal.pos.x + principal.pos.width / 2, principal.pos.y + principal.pos.height / 2)
+        
+        lp = (principal_pos.x + (dir_mark_pos.x - principal_pos.x) * math.cos(principal.viewing_angle / 2) - (dir_mark_pos.y - principal_pos.y) * math.sin(principal.viewing_angle / 2), principal_pos.y + (dir_mark_pos.x - principal_pos.x) * math.sin(principal.viewing_angle / 2) + (dir_mark_pos.y - principal_pos.y) * math.cos(principal.viewing_angle / 2))
+        rp = (principal_pos.x + (dir_mark_pos.x - principal_pos.x) * math.cos(-principal.viewing_angle / 2) - (dir_mark_pos.y - principal_pos.y) * math.sin(-principal.viewing_angle / 2), principal_pos.y + (dir_mark_pos.x - principal_pos.x) * math.sin(-principal.viewing_angle / 2) + (dir_mark_pos.y - principal_pos.y) * math.cos(-principal.viewing_angle / 2))
+
+        pygame.draw.circle(screen, "black", (lp[0] - camera.x, lp[1] - camera.y), 5)
+        pygame.draw.circle(screen, "black", (rp[0] - camera.x, rp[1] - camera.y), 5)
+
+        # left ray
+        if True:
+            dx = lp[0] - principal_pos.x
+            dy = lp[1] - principal_pos.y
+                        
+            dist = math.sqrt(dx**2 + dy**2)
+            inc = lvl.tile_size / 2
+
+            ddx = dx / dist * inc
+            ddy = dy / dist * inc
+
+            rpos = [principal_pos.x, principal_pos.y]
+
+            while True:
+                rpos[0] += ddx
+                rpos[1] += ddy
+
+                tile = lvl.coord_to_tile(rpos[0], rpos[1])
+
+                if lvl.tiles[tile[1]][tile[0]].t == 0:
+                    break
+
+            pygame.draw.line(screen, "black", (principal_pos.x - camera.x, principal_pos.y - camera.y), (rpos[0] - camera.x, rpos[1] - camera.y))
+
+        # right ray
+        if True:
+            dx = rp[0] - principal_pos.x
+            dy = rp[1] - principal_pos.y
+                        
+            dist = math.sqrt(dx**2 + dy**2)
+            inc = lvl.tile_size / 2
+
+            ddx = dx / dist * inc
+            ddy = dy / dist * inc
+
+            rpos = [principal_pos.x, principal_pos.y]
+
+            while True:
+                rpos[0] += ddx
+                rpos[1] += ddy
+
+                tile = lvl.coord_to_tile(rpos[0], rpos[1])
+
+                if lvl.tiles[tile[1]][tile[0]].t == 0:
+                    break
+
+            pygame.draw.line(screen, "black", (principal_pos.x - camera.x, principal_pos.y - camera.y), (rpos[0] - camera.x, rpos[1] - camera.y))
 
         # draw items
         for i, item in enumerate(items):
