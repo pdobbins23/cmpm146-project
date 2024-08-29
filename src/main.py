@@ -319,25 +319,26 @@ if __name__ == "__main__":
             dist = math.sqrt(vdx**2 + vdy**2)
             inc = lvl.tile_size / 2
 
-            ddx = vdx / dist * inc
-            ddy = vdy / dist * inc
+            if dist != 0:
+                ddx = vdx / dist * inc
+                ddy = vdy / dist * inc
 
-            rpos = [principal.pos.x, principal.pos.y]
+                rpos = [principal.pos.x, principal.pos.y]
 
-            while True:
-                rpos[0] += ddx
-                rpos[1] += ddy
+                while True:
+                    rpos[0] += ddx
+                    rpos[1] += ddy
 
-                tile = lvl.coord_to_tile(rpos[0], rpos[1])
+                    tile = lvl.coord_to_tile(rpos[0], rpos[1])
 
-                if lvl.tiles[tile[1]][tile[0]].t == 0:
-                    obstruction = True
-                    break
+                    if lvl.tiles[tile[1]][tile[0]].t == 0:
+                        obstruction = True
+                        break
 
-                player_tile = lvl.coord_to_tile(player.pos.x, player.pos.y)
+                    player_tile = lvl.coord_to_tile(player.pos.x, player.pos.y)
 
-                if tile[0] == player_tile[0] and tile[1] == player_tile[1]:
-                    break
+                    if tile[0] == player_tile[0] and tile[1] == player_tile[1]:
+                        break
 
             if not obstruction:
                 principal.can_see_player = True
@@ -350,11 +351,11 @@ if __name__ == "__main__":
         # process principal
         state = State(player, principal, items, lockers, lvl, time.time())
 
-        result = behavior_tree.execute(state)
+        # result = behavior_tree.execute(state)
 
-        print("BEHAVIOR:", result)
+        # print("BEHAVIOR:", result)
 
-        # pathfind_ticks += 1
+        pathfind_ticks += 1
 
         if principal.stage == 0:
             print("ROAMING")
@@ -363,9 +364,9 @@ if __name__ == "__main__":
         if principal.stage == 2:
             print("CHASING")
 
-        # if pathfind_ticks > 10:
-            # pathfind_ticks = 0
-            # principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
+        if pathfind_ticks > 10:
+            pathfind_ticks = 0
+            principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
 
         # pathfinding
         if principal.target != None:
