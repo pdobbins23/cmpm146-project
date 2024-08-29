@@ -322,10 +322,12 @@ if __name__ == "__main__":
             principal_angle = math.pi / 4
 
         angle_diff = principal_angle - player_angle
-        angle_norm = math.atan2(math.sin(angle_diff), math.cos(angle_diff))
+        angle_norm = math.fabs(math.atan2(math.sin(angle_diff), math.cos(angle_diff)))
+
+        # print(angle_norm, principal.viewing_angle / 2)
 
         # player within viewing angle
-        if angle_diff <= principal.viewing_angle / 2:
+        if angle_norm <= principal.viewing_angle / 2:
             obstruction = False
 
             # cast ray from principal position to player, check for tile collisions
