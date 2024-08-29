@@ -35,7 +35,8 @@ class Principal:
         self.target = None
 
         # view angle (~140 degrees)
-        self.viewing_angle = 2.45
+        self.viewing_angle = 2.3
+        self.view_midpoint = None
 
         # current pathfinding path
         self.path = None
@@ -298,10 +299,12 @@ if __name__ == "__main__":
         # process line of sight
         principal.can_see_player = False
         
-        vdx = player.pos.x - principal.pos.x
-        vdy = player.pos.y - principal.pos.y
-         
-        player_angle = math.atan2(vdy, vdx)
+        vdx = (player.pos.x + player.pos.width / 2) - (principal.pos.x + principal.pos.width / 2)
+        vdy = (player.pos.y + player.pos.height / 2) - (principal.pos.y + principal.pos.height / 2)
+
+        player_angle = pygame.Vector2(principal.pos.x + principal.pos.width / 2, principal.pos.y + principal.pos.height / 2).angle_to(pygame.Vector2(player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)) # math.atan2(vdy, vdx)
+
+        print(player_angle)
 
         if principal.dir == 0:
             principal_angle = -math.pi / 2
@@ -312,9 +315,9 @@ if __name__ == "__main__":
         elif principal.dir == 3:
             principal_angle = 0
         elif principal.dir == 4:
-            principal_angle = -math.pi / 4
-        elif principal.dir == 5:
             principal_angle = 3 * -math.pi / 4
+        elif principal.dir == 5:
+            principal_angle = -math.pi / 4
         elif principal.dir == 6:
             principal_angle = 3 * math.pi / 4
         elif principal.dir == 7:
@@ -322,19 +325,21 @@ if __name__ == "__main__":
 
         angle_diff = math.fabs(principal_angle - player_angle)
 
+        # print(principal_angle, player_angle, angle_diff)
+
         # player within viewing angle
         if angle_diff <= principal.viewing_angle / 2:
             obstruction = False
 
             # cast ray from principal position to player, check for tile collisions
             dist = math.sqrt(vdx**2 + vdy**2)
-            inc = lvl.tile_size / 2
+            inc = 1
 
             if dist != 0:
                 ddx = vdx / dist * inc
                 ddy = vdy / dist * inc
 
-                rpos = [principal.pos.x, principal.pos.y]
+                rpos = [principal.pos.x + principal.pos.width / 2, principal.pos.y + principal.pos.height / 2]
 
                 while True:
                     rpos[0] += ddx
@@ -346,10 +351,10 @@ if __name__ == "__main__":
                         obstruction = True
                         break
 
-                    player_tile = lvl.coord_to_tile(player.pos.x, player.pos.y)
-
-                    if tile[0] == player_tile[0] and tile[1] == player_tile[1]:
+                    if player.pos.collidepoint(rpos[0], rpos[1]):
                         break
+
+            principal.view_midpoint = rpos
 
             if not obstruction:
                 principal.can_see_player = True
@@ -417,8 +422,8 @@ if __name__ == "__main__":
                 elif dy > 0:
                     principal.dir = 1
 
-            principal.pos.x += dx
-            principal.pos.y += dy
+            # principal.pos.x += dx
+            # principal.pos.y += dy
 
             # If reached the target step, remove it from the path
             if distance < principal.speed * 1.5:
@@ -596,6 +601,10 @@ if __name__ == "__main__":
                     break
 
             pygame.draw.line(screen, "black", (principal_pos.x - camera.x, principal_pos.y - camera.y), (rpos[0] - camera.x, rpos[1] - camera.y))
+
+        # midpoint ray
+        if principal.view_midpoint != None:
+            pygame.draw.line(screen, "black", (principal_pos.x - camera.x, principal_pos.y - camera.y), (principal.view_midpoint[0] - camera.x, principal.view_midpoint[1] - camera.y))
 
         # draw items
         for i, item in enumerate(items):
