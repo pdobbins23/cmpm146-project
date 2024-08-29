@@ -302,9 +302,7 @@ if __name__ == "__main__":
         vdx = (player.pos.x + player.pos.width / 2) - (principal.pos.x + principal.pos.width / 2)
         vdy = (player.pos.y + player.pos.height / 2) - (principal.pos.y + principal.pos.height / 2)
 
-        player_angle = pygame.Vector2(principal.pos.x + principal.pos.width / 2, principal.pos.y + principal.pos.height / 2).angle_to(pygame.Vector2(player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)) # math.atan2(vdy, vdx)
-
-        print(player_angle)
+        player_angle = math.atan2(vdy, vdx)
 
         if principal.dir == 0:
             principal_angle = -math.pi / 2
@@ -323,9 +321,8 @@ if __name__ == "__main__":
         elif principal.dir == 7:
             principal_angle = math.pi / 4
 
-        angle_diff = math.fabs(principal_angle - player_angle)
-
-        # print(principal_angle, player_angle, angle_diff)
+        angle_diff = principal_angle - player_angle
+        angle_norm = math.atan2(math.sin(angle_diff), math.cos(angle_diff))
 
         # player within viewing angle
         if angle_diff <= principal.viewing_angle / 2:
@@ -422,8 +419,8 @@ if __name__ == "__main__":
                 elif dy > 0:
                     principal.dir = 1
 
-            # principal.pos.x += dx
-            # principal.pos.y += dy
+            principal.pos.x += dx
+            principal.pos.y += dy
 
             # If reached the target step, remove it from the path
             if distance < principal.speed * 1.5:
