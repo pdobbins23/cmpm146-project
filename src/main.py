@@ -48,6 +48,7 @@ class Principal:
         self.can_see_player = False
         self.last_seen_player_pos = None
         self.last_seen_player_time = 0
+        self.wandering = False
 
         # properties
         self.speed = 4
@@ -365,7 +366,7 @@ if __name__ == "__main__":
         # process principal
         state = State(player, principal, items, lockers, lvl, time.time())
 
-        # result = behavior_tree.execute(state)
+        result = behavior_tree.execute(state)
 
         # print("BEHAVIOR:", result)
 
@@ -380,7 +381,7 @@ if __name__ == "__main__":
 
         if pathfind_ticks > 0:
             pathfind_ticks = 0
-            principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
+            # principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
 
         # pathfinding
         if principal.target != None:
@@ -427,6 +428,9 @@ if __name__ == "__main__":
             # If reached the target step, remove it from the path
             if distance < principal.speed * 1.5:
                 principal.path.pop(0)
+
+                if principal.wandering and len(principal.path) == 0:
+                    principal.wandering = False
             
         # principal collision
         tl = lvl.coord_to_tile(principal.pos.x, principal.pos.y)
@@ -508,7 +512,8 @@ if __name__ == "__main__":
             pygame.draw.rect(screen, "green" if not principal.can_see_player else "yellow", pygame.Rect(player.pos.x - camera.x, player.pos.y - camera.y, player.pos.width, player.pos.height))
 
         # draw principal
-        pygame.draw.rect(screen, "red", pygame.Rect(principal.pos.x - camera.x, principal.pos.y - camera.y, principal.pos.width, principal.pos.height))
+        color = "red" if principal.stage == 2 else ("orange" if principal.stage == 1 else "gray")
+        pygame.draw.rect(screen, color, pygame.Rect(principal.pos.x - camera.x, principal.pos.y - camera.y, principal.pos.width, principal.pos.height))
 
         # draw principal direction
         dir_mark = pygame.Rect(0, 0, 8, 8)

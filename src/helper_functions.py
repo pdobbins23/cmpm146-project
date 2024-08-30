@@ -45,31 +45,37 @@ def check_is_player_in_front(state):
     # 4. Default Case
     return False
 
-def move_random_point(state): 
+def move_random_point(state):
+    import random
+
+    state.principal.wandering = True
+    
     tl = state.level.coord_to_tile(state.principal.pos.x, state.principal.pos.y)
     br = state.level.coord_to_tile(state.principal.pos.x + state.principal.pos.width, state.principal.pos.y + state.principal.pos.height)
 
     wander_range = 5
 
-    tl[0] = tl[0] - wander_range if tl[0] - wander_range > 0 else 1
-    tl[1] = tl[1] - wander_range if tl[1] - wander_range > 0 else 1
-    br[0] = br[0] + wander_range if br[0] + wander_range < state.lvl.width else state.lvl.width - 1
-    br[1] = br[1] + wander_range if br[1] + wander_range < state.lvl.height else state.lvl.height - 1
+    tlx = tl[0] - wander_range if tl[0] - wander_range > 0 else 1
+    tly = tl[1] - wander_range if tl[1] - wander_range > 0 else 1
+    brx = br[0] + wander_range if br[0] + wander_range < state.level.width else state.level.width - 1
+    bry = br[1] + wander_range if br[1] + wander_range < state.level.height else state.level.height - 1
 
-    random_tile_x = random.randint(tl[0], br[0])
-    random_tile_y = random.randint(tl[1], br[1])
+    random_tile_x = random.randint(tlx, brx)
+    random_tile_y = random.randint(tly, bry)
 
     while state.level.tiles[random_tile_y][random_tile_x].t != 1:
-        random_tile_x = random.randint(tl[0], br[0])
-        random_tile_y = random.randint(tl[1], br[1])
+        random_tile_x = random.randint(tlx, brx)
+        random_tile_y = random.randint(tly, bry)
     
     # Save point to target
-    random_x = random_tile_x * state.level.tile_size + random.random() * state.level.tile_size
-    random_y = random_tile_y * state.level.tile_size + random.random() * state.level.tile_size
+    # random_x = random_tile_x * state.level.tile_size + random.random() * state.level.tile_size
+    # random_y = random_tile_y * state.level.tile_size + random.random() * state.level.tile_size
+    x = random_tile_x * state.level.tile_size + state.level.tile_size / 2
+    y = random_tile_y * state.level.tile_size + state.level.tile_size / 2
     
-    state.principal.target = (random_x, random_y) # No attribute called target in Main (talk to team)
+    state.principal.target = (x, y) # No attribute called target in Main (talk to team)
     
-    print(f"Setting random target: ({random_x}, {random_y})")
+    # print(f"Setting random target: ({x}, {y})")
 
     # Return success
     return True
@@ -95,94 +101,6 @@ def chase_player(state):
     
     # Set player's position as the Principal's target
     state.principal.target = player_pos
-    
-    state.principal.stage = 2 # set to chasing stage
-
-# code taken and revised from p1
-def heuristic(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-def get_neighbors(node, world):
-    neighbors = []
-    x, y = node
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Right, Down, Left, Up
-
-    for dx, dy in directions:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < len(world) and 0 <= ny < len(world[0]) and world[nx][ny].t == 1:
-            neighbors.append((nx, ny))
-
-    return neighbors
-
-def reconstruct_path(forward_came_from, backward_came_from, meeting_point):
-    path_forward = []
-    current = meeting_point
-    while current in forward_came_from:
-        path_forward.append(current)
-        current = forward_came_from[current]
-    path_forward.reverse()
-
-    path_backward = []
-    current = meeting_point
-    while current in backward_came_from:
-        path_backward.append(current)
-        current = backward_came_from[current]
-
-    return path_forward + path_backward[1:]
-
-# old a_star
-def a_star_old(start, goal, world):
-    priority_queue = []
-    heappush(priority_queue, (0, start, 'forward'))
-    heappush(priority_queue, (0, goal, 'backward'))
-
-    visited_forward = {}
-    visited_backward = {}
-
-    cost_to_child_forward = defaultdict(lambda: float('inf'))
-    cost_to_child_backward = defaultdict(lambda: float('inf'))
-
-    visited_forward[start] = None
-    visited_backward[goal] = None
-
-    cost_to_child_forward[start] = 0
-    cost_to_child_backward[goal] = 0
-
-    meeting_point = None
-
-    while priority_queue:
-        _, current_node, direction = heappop(priority_queue)
-
-        if direction == 'forward':
-            if current_node in visited_backward:
-                meeting_point = current_node
-                break
-
-            for neighbor in get_neighbors(current_node, world):
-                new_cost = cost_to_child_forward[current_node] + 1
-                if new_cost < cost_to_child_forward[neighbor]:
-                    cost_to_child_forward[neighbor] = new_cost
-                    priority = new_cost + heuristic(neighbor, goal)
-                    heappush(priority_queue, (priority, neighbor, 'forward'))
-                    visited_forward[neighbor] = current_node
-
-        else:
-            if current_node in visited_forward:
-                meeting_point = current_node
-                break
-
-            for neighbor in get_neighbors(current_node, world):
-                new_cost = cost_to_child_backward[current_node] + 1
-                if new_cost < cost_to_child_backward[neighbor]:
-                    cost_to_child_backward[neighbor] = new_cost
-                    priority = new_cost + heuristic(neighbor, start)
-                    heappush(priority_queue, (priority, neighbor, 'backward'))
-                    visited_backward[neighbor] = current_node
-
-    if meeting_point is not None:
-        return reconstruct_path(visited_forward, visited_backward, meeting_point)
-
-    return None
 
 # new a_star
 def calc_point_location(start_tile, start_pos, end_tile):
@@ -227,7 +145,6 @@ def a_star(level, start_pos, goal_pos):
                 came_from[next] = current
 
     if not goal_tile in came_from:
-        print("no goal")
         return None
 
     path = [goal_pos]
