@@ -49,6 +49,7 @@ class Principal:
         self.last_seen_player_pos = None
         self.last_seen_player_time = 0
         self.wandering = False
+        self.patrol_begin_time = 0
 
         # properties
         self.speed = 4
@@ -93,11 +94,17 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((window_width, window_height), flags=pygame.SCALED, vsync=1)
     clock = pygame.time.Clock()
 
+    # assets
+    tileset = pygame.image.load("assets/school_tiles.png").convert_alpha()
+    locker_texture = pygame.image.load("assets/school_locker.png").convert_alpha()
+    
+    item_textures = [pygame.image.load("assets/school_eraser.png").convert_alpha(), pygame.image.load("assets/school_pencil.png").convert_alpha(), pygame.image.load("assets/school_redbook.png").convert_alpha(), pygame.image.load("assets/school_bluebook.png").convert_alpha()]
+
     # game data
     camera = pygame.Vector2(0, 0)
     
     player = Player(pygame.Rect(50, 50, 32, 32))
-    principal = Principal(pygame.Rect(100, 100, 32, 32))
+    principal = Principal(pygame.Rect(300, 300, 32, 32))
 
     pathfind_ticks = 0
 
@@ -108,10 +115,11 @@ if __name__ == "__main__":
     # generate items
     for y in range(0, lvl.height):
         for x in range(0, lvl.width):
-            if lvl.tiles[y][x].t == 1 and random.random() < 0.005:
+            if lvl.tiles[y][x].t == 7 and random.random() < 0.005:
                 random_x = random.random() * lvl.tile_size
                 random_y = random.random() * lvl.tile_size
-                items.append(Item(None, pygame.Rect(x * lvl.tile_size + random_x, y * lvl.tile_size + random_y, 16, 16)))
+                random_texture = random.choice(item_textures)
+                items.append(Item(random_texture, pygame.Rect(x * lvl.tile_size + random_x, y * lvl.tile_size + random_y, 32, 32)))
 
     lockers = [Locker(pygame.Rect(200, 200, 32, 64))]
 
@@ -185,7 +193,7 @@ if __name__ == "__main__":
 
                 # we are colliding with a solid wall tile
                 # TODO: Remove hard-coded tile type checks, use LDtk features instead
-                if lvl.tiles[y][x].t == 0:
+                if lvl.tiles[y][x].t != 7:
                     collision = True
 
                 # resolve collision
@@ -262,9 +270,12 @@ if __name__ == "__main__":
                 for x in range(tl[0], br[0] + 1):
                     collision = False
 
+                    if x < 0 or x >= lvl.width or y < 0 or y >= lvl.height:
+                        continue
+
                     # we are colliding with a solid wall tile
                     # TODO: Remove hard-coded tile type checks, use LDtk features instead
-                    if lvl.tiles[y][x].t == 0:
+                    if lvl.tiles[y][x].t != 7:
                         collision = True
 
                     # resolve collision
@@ -347,7 +358,7 @@ if __name__ == "__main__":
 
                     tile = lvl.coord_to_tile(rpos[0], rpos[1])
 
-                    if lvl.tiles[tile[1]][tile[0]].t == 0:
+                    if lvl.tiles[tile[1]][tile[0]].t != 7:
                         obstruction = True
                         break
 
@@ -365,23 +376,7 @@ if __name__ == "__main__":
 
         # process principal
         state = State(player, principal, items, lockers, lvl, time.time())
-
-        result = behavior_tree.execute(state)
-
-        # print("BEHAVIOR:", result)
-
-        pathfind_ticks += 1
-
-        # if principal.stage == 0:
-            # print("ROAMING")
-        # if principal.stage == 1:
-            # print("PATROLLING")
-        # if principal.stage == 2:
-            # print("CHASING")
-
-        if pathfind_ticks > 0:
-            pathfind_ticks = 0
-            # principal.target = (player.pos.x + player.pos.width / 2, player.pos.y + player.pos.height / 2)
+        behavior_tree.execute(state)
 
         # pathfinding
         if principal.target != None:
@@ -397,40 +392,46 @@ if __name__ == "__main__":
             dy = next_step[1] - (principal.pos.y + principal.pos.height / 2)
 
             distance = math.sqrt(dx**2 + dy**2)
+
             if distance != 0:
                 dx, dy = dx / distance * principal.speed, dy / distance * principal.speed
 
-            # print(dx, dy, distance, principal.path)
+                # print(dx, dy, distance, principal.path)
 
-            if dx < 0:
-                if dy < 0:
-                    principal.dir = 4
-                elif dy > 0:
-                    principal.dir = 6
+                if dx < 0:
+                    if dy < 0:
+                        principal.dir = 4
+                    elif dy > 0:
+                        principal.dir = 6
+                    else:
+                        principal.dir = 2
+                elif dx > 0:
+                    if dy < 0:
+                        principal.dir = 5
+                    elif dy > 0:
+                        principal.dir = 7
+                    else:
+                        principal.dir = 3
                 else:
-                    principal.dir = 2
-            elif dx > 0:
-                if dy < 0:
-                    principal.dir = 5
-                elif dy > 0:
-                    principal.dir = 7
-                else:
-                    principal.dir = 3
-            else:
-                if dy < 0:
-                    principal.dir = 0
-                elif dy > 0:
-                    principal.dir = 1
+                    if dy < 0:
+                        principal.dir = 0
+                    elif dy > 0:
+                        principal.dir = 1
 
-            principal.pos.x += dx
-            principal.pos.y += dy
+                principal.pos.x += dx
+                principal.pos.y += dy
 
             # If reached the target step, remove it from the path
             if distance < principal.speed * 1.5:
                 principal.path.pop(0)
 
+                principal.pos.x = next_step[0] - principal.pos.width / 2
+                principal.pos.y = next_step[1] - principal.pos.height / 2
+
+                # if principal was wandering to this location, reset wandering state
                 if principal.wandering and len(principal.path) == 0:
                     principal.wandering = False
+                    principal.path = None
             
         # principal collision
         tl = lvl.coord_to_tile(principal.pos.x, principal.pos.y)
@@ -443,7 +444,7 @@ if __name__ == "__main__":
 
                 # we are colliding with a solid wall tile
                 # TODO: Remove hard-coded tile type checks, use LDtk features instead
-                if lvl.tiles[y][x].t == 0:
+                if lvl.tiles[y][x].t != 7:
                     collision = True
 
                 # resolve collision
@@ -492,20 +493,25 @@ if __name__ == "__main__":
 
                 tile = lvl.tiles[y][x]
 
-                # TODO: Switch to using the information from LDtk to render proper tile texture
-                if tile.t == 0:
-                    pygame.draw.rect(screen, "purple", r)
-                elif tile.t == 1:
-                    pygame.draw.rect(screen, "blue", r)
-                else:
-                    print("UNKNOWN TILE:", tile.t)
+                screen.blit(tileset, (r.x, r.y), pygame.Rect(tile.src[0], tile.src[1], lvl.tile_size, lvl.tile_size))
+
+                # if tile.t == 0:
+                #     pygame.draw.rect(screen, "purple", r)
+                # elif tile.t == 1:
+                #     pygame.draw.rect(screen, "blue", r)
+                # else:
+                #     print("UNKNOWN TILE:", tile.t)
 
         # draw lockers
         for i, locker in enumerate(lockers):
             if player.locker == i:
                 pygame.draw.rect(screen, "green", pygame.Rect(locker.pos.x - camera.x - 5, locker.pos.y - camera.y - 5, locker.pos.width + 10, locker.pos.height + 10))
 
-            pygame.draw.rect(screen, "gray", pygame.Rect(locker.pos.x - camera.x, locker.pos.y - camera.y, locker.pos.width, locker.pos.height))
+            r = pygame.Rect(locker.pos.x - camera.x, locker.pos.y - camera.y, locker.pos.width, locker.pos.height)
+
+            screen.blit(locker_texture, (r.x, r.y))
+
+            # pygame.draw.rect(screen, "gray", pygame.Rect(locker.pos.x - camera.x, locker.pos.y - camera.y, locker.pos.width, locker.pos.height))
 
         # draw player
         if player.locker == None:
@@ -577,7 +583,7 @@ if __name__ == "__main__":
 
                 tile = lvl.coord_to_tile(rpos[0], rpos[1])
 
-                if lvl.tiles[tile[1]][tile[0]].t == 0:
+                if lvl.tiles[tile[1]][tile[0]].t != 7:
                     break
 
             pygame.draw.line(screen, "black", (principal_pos.x - camera.x, principal_pos.y - camera.y), (rpos[0] - camera.x, rpos[1] - camera.y))
@@ -601,7 +607,7 @@ if __name__ == "__main__":
 
                 tile = lvl.coord_to_tile(rpos[0], rpos[1])
 
-                if lvl.tiles[tile[1]][tile[0]].t == 0:
+                if lvl.tiles[tile[1]][tile[0]].t != 7:
                     break
 
             pygame.draw.line(screen, "black", (principal_pos.x - camera.x, principal_pos.y - camera.y), (rpos[0] - camera.x, rpos[1] - camera.y))
@@ -614,8 +620,12 @@ if __name__ == "__main__":
         for i, item in enumerate(items):
             if player.locker != None and i == player.holding_item:
                 continue
+
+            r = pygame.Rect(item.pos.x - camera.x, item.pos.y - camera.y, item.pos.width, item.pos.height)
+
+            screen.blit(item.texture, (r.x, r.y))
             
-            pygame.draw.rect(screen, "brown", pygame.Rect(item.pos.x - camera.x, item.pos.y - camera.y, item.pos.width, item.pos.height))
+            # pygame.draw.rect(screen, "brown", pygame.Rect(item.pos.x - camera.x, item.pos.y - camera.y, item.pos.width, item.pos.height))
 
         # swap buffers
         pygame.display.flip()
