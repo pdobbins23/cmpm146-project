@@ -1,3 +1,5 @@
+import random
+
 def check_not(check):
     def c(state):
         return not check(state)
@@ -36,3 +38,7 @@ def check_principal_last_seen_player_time(state):
 
 def check_principal_patrol_over(state):
     return state.time - state.principal.patrol_begin_time >= 15
+
+def check_principal_decide_check_locker(state):
+    # 20% chance
+    return random.random() <= 0.2

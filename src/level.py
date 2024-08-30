@@ -35,42 +35,42 @@ class Level:
                 if oleft:
                     left = (x - 1, y)
 
-                    if self.tiles[left[1]][left[0]].t == 7:
+                    if self.tiles[left[1]][left[0]].t == 8:
                         self.adj_tiles[tile].append(left)
                 if oright:
                     right = (x + 1, y)
 
-                    if self.tiles[right[1]][right[0]].t == 7:
+                    if self.tiles[right[1]][right[0]].t == 8:
                         self.adj_tiles[tile].append(right)
                 if oup:
                     up = (x, y - 1)
 
-                    if self.tiles[up[1]][up[0]].t == 7:
+                    if self.tiles[up[1]][up[0]].t == 8:
                         self.adj_tiles[tile].append(up)
                 if odown:
                     down = (x, y + 1)
 
-                    if self.tiles[down[1]][down[0]].t == 7:
+                    if self.tiles[down[1]][down[0]].t == 8:
                         self.adj_tiles[tile].append(down)
                 # if oleft and oup:
                 #     upleft = (x - 1, y - 1)
 
-                #     if self.tiles[upleft[1]][upleft[0]].t == 7:
+                #     if self.tiles[upleft[1]][upleft[0]].t == 8:
                 #         self.adj_tiles[tile].append(upleft)
                 # if oright and oup:
                 #     upright = (x + 1, y - 1)
 
-                #     if self.tiles[upright[1]][upright[0]].t == 7:
+                #     if self.tiles[upright[1]][upright[0]].t == 8:
                 #         self.adj_tiles[tile].append(upright)
                 # if oleft and odown:
                 #     downleft = (x - 1, y + 1)
 
-                #     if self.tiles[downleft[1]][downleft[0]].t == 7:
+                #     if self.tiles[downleft[1]][downleft[0]].t == 8:
                 #         self.adj_tiles[tile].append(downleft)
                 # if oright and odown:
                 #     downright = (x + 1, y + 1)
 
-                #     if self.tiles[downright[1]][downright[0]].t == 7:
+                #     if self.tiles[downright[1]][downright[0]].t == 8:
                 #         self.adj_tiles[tile].append(downright)
                     
 

@@ -88,16 +88,21 @@ def create_behavior_tree():
     investigate_sound = Action(action_principal_investigate_sound)
     sound_sequence.child_nodes = [hear_sound, investigate_sound]
 
-    # TODO: Integrate random nearby locker checking
+    # Randomly open a locker
+    locker_sequence = Sequence(name="Check Lockers")
+    not_wandering = Check(check_not(check_principal_wandering))
+    randomly_decide = Check(check_principal_decide_check_locker)
+    search_nearby_locker = Action(action_principal_search_nearby_locker)
+    locker_sequence.child_nodes = [not_wandering, randomly_decide, search_nearby_locker]
 
-    # Wander to Points of Interest
+    # Wander
     wander_sequence = Sequence(name="Wander")
     not_wandering = Check(check_not(check_principal_wandering))
     wander = Action(action_principal_wander_to_point)
     wander_sequence.child_nodes = [not_wandering, wander]
 
     # Prioritize sight over sound
-    prioritize_sight.child_nodes = [calming_sequence, sight_sequence, sound_sequence, wander_sequence]
+    prioritize_sight.child_nodes = [calming_sequence, sight_sequence, sound_sequence, locker_sequence, wander_sequence]
     
     patrol_stage.child_nodes = [patrolling, prioritize_sight]
 
