@@ -34,7 +34,7 @@ def check_principal_see_player(state):
     return state.principal.can_see_player
 
 def check_principal_last_seen_player_time(state):
-    return state.time - state.principal.last_seen_player_time >= 5
+    return state.time - state.principal.last_seen_player_time >= 2
 
 def check_principal_patrol_over(state):
     return state.time - state.principal.patrol_begin_time >= 15
