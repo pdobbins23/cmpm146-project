@@ -427,7 +427,7 @@ if __name__ == "__main__":
             principal.target = None
 
         # Follow the first step of the path if it exists
-        if principal.path:
+        if principal.path != None and len(principal.path) > 0:
             next_step = principal.path[0]
 
             dx = next_step[0] - (principal.pos.x + principal.pos.width / 2)
@@ -470,14 +470,16 @@ if __name__ == "__main__":
                 principal.pos.y += dy
 
             # If reached the target step, remove it from the path
-            if distance < principal.speed * 2:
+            if distance < principal.speed * 1.5:
                 principal.path.pop(0)
 
                 principal.pos.x = next_step[0] - principal.pos.width / 2
                 principal.pos.y = next_step[1] - principal.pos.height / 2
 
+                # print(len(principal.path))
+
                 # if principal was wandering to this location, reset wandering state
-                if principal.wandering and len(principal.path) == 0:
+                if len(principal.path) == 0:
                     principal.wandering = False
                     principal.path = None
 
@@ -486,6 +488,16 @@ if __name__ == "__main__":
                             player.locker = None
 
                         principal.target_locker = None
+
+        if principal.path != None and len(principal.path) == 0:
+            principal.wandering = False
+            principal.path = None
+
+            if principal.target_locker != None:
+                if principal.target_locker == player.locker:
+                    player.locker = None
+
+                principal.target_locker = None
             
         # principal collision
         # tl = lvl.coord_to_tile(principal.pos.x, principal.pos.y)
