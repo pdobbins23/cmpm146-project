@@ -145,12 +145,16 @@ if __name__ == "__main__":
     lockers = []
     
     # generate lockers
-    for y in range(0, lvl.height):
-        for x in range(0, lvl.width):
-            if lvl.tiles[y][x].t == 8 and random.random() < 0.001:
-                random_x = random.random() * lvl.tile_size
-                random_y = random.random() * lvl.tile_size
-                lockers.append(Locker(pygame.Rect(x * lvl.tile_size + random_x, y * lvl.tile_size + random_y, 32, 64)))
+    while len(lockers) < 4:
+        for y in range(0, lvl.height):
+            for x in range(0, lvl.width):
+                if lvl.tiles[y][x].t == 8 and random.random() < 0.0001:
+                    if x > 1 and x < lvl.width - 1 and y > 1 and y < lvl.height - 1:
+                        if lvl.tiles[y - 1][x] != 8 or lvl.tiles[y][x - 1] != 8 or lvl.tiles[y][x + 1] != 8:
+                            continue
+                    random_x = random.random() * lvl.tile_size
+                    random_y = random.random() * lvl.tile_size
+                    lockers.append(Locker(pygame.Rect(x * lvl.tile_size + random_x, y * lvl.tile_size + random_y, 32, 64)))
 
     running = True
 

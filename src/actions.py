@@ -69,7 +69,7 @@ def action_principal_search_nearby_locker(state):
     shortest_pos = None
     target_locker = None
 
-    print("searching for locker")
+    # print("searching for locker")
     
     for i, locker in enumerate(state.lockers):
         locker_tile = state.level.coord_to_tile(locker.pos.x, locker.pos.y)
@@ -87,7 +87,7 @@ def action_principal_search_nearby_locker(state):
     if target_locker == None or len(shortest_path) > 20:
         return False
 
-    print("searching nearby locker")
+    # print("searching nearby locker")
 
     state.principal.target_locker = target_locker
     state.principal.target = shortest_pos
